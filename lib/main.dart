@@ -94,8 +94,7 @@ class _MyAppState extends State<MyApp> {
                     onDownloadStartRequest: (controller, url) async {
                       String fileUrl = url.url.uriValue.toString();
                       debugPrint('**** ----- !!!! URL del archivo: $fileUrl , MimeType: ${url.mimeType}');
-
-                      if (fileUrl.toLowerCase().startsWith('blob:')) {
+                      if (fileUrl.toLowerCase().startsWith('blob:') || url.mimeType == 'application/pdf' || fileUrl.toLowerCase().startsWith("data:application/octet-stream;base64,")){
                         Fluttertoast.showToast(
                           msg: 'BLOB, intentando descargar... \n ${url.mimeType} \n $fileUrl',
                           backgroundColor: Colors.orange,
@@ -119,27 +118,13 @@ class _MyAppState extends State<MyApp> {
                         webViewController.evaluateJavascript(source: jsCode);
                         return;
                       } else {
+                         debugPrint('**** ----- else');
                         Fluttertoast.showToast(
-                          msg: 'ATTACHMENT, intentando descargar... \n ${url.mimeType} \n $fileUrl',
+                          msg: 'Url no reconocido \n $fileUrl',
                           backgroundColor: Colors.red,
                           textColor: Colors.white,
                           fontSize: 16.0,
                         );
-
-                        String jsCode = """
-                          (async function() {
-                            const blobUrl = "$fileUrl";
-                            const response = await fetch(blobUrl);
-                            const blob = await response.blob();
-                            const reader = new FileReader();
-                            reader.readAsDataURL(blob);
-                            reader.onloadend = function() {
-                              window.flutter_inappwebview.callHandler('downloadBlob', reader.result);
-                            }
-                          })();
-                        """;
-                        webViewController.evaluateJavascript(source: jsCode);
-                        return;
                       }
                     },
                   ),
