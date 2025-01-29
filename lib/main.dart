@@ -74,15 +74,10 @@ class _MyAppState extends State<MyApp> {
                           // Obtener la carpeta de Descargas
                           Directory? downloadsDirectory = await getDownloadsDirectory();
                           if (downloadsDirectory == null) {
-                            Fluttertoast.showToast(
-                              msg: 'No se pudo acceder a la carpeta de Descargas',
-                              backgroundColor: Colors.red,
-                              textColor: Colors.white,
-                              fontSize: 16.0,
-                            );
-                            return;
+                            downloadsDirectory = await getApplicationDocumentsDirectory();
                           }
-                          String filePath = '${directory?.path}/$nombre_archivo.pdf';
+
+                          String filePath = '${downloadsDirectory?.path}/$nombre_archivo.pdf';
 
                           File file = File(filePath);
                           await file.writeAsBytes(base64Decode(base64Data));
@@ -99,9 +94,10 @@ class _MyAppState extends State<MyApp> {
                     onDownloadStartRequest: (controller, url) async {
                       String fileUrl = url.url.uriValue.toString();
                       debugPrint('**** ----- !!!! URL del archivo: $fileUrl , MimeType: ${url.mimeType}');
+
                       if (fileUrl.toLowerCase().startsWith('blob:')) {
                         Fluttertoast.showToast(
-                          msg: 'Detectado archivo BLOB, intentando descargar...',
+                          msg: 'BLOB, intentando descargar... \n ${url.mimeType} \n $fileUrl',
                           backgroundColor: Colors.orange,
                           textColor: Colors.white,
                           fontSize: 16.0,
@@ -124,7 +120,7 @@ class _MyAppState extends State<MyApp> {
                         return;
                       } else {
                         Fluttertoast.showToast(
-                          msg: 'Detectado archivo ATTACHMENT, intentando descargar... \n $fileUrl',
+                          msg: 'ATTACHMENT, intentando descargar... \n ${url.mimeType} \n $fileUrl',
                           backgroundColor: Colors.red,
                           textColor: Colors.white,
                           fontSize: 16.0,
