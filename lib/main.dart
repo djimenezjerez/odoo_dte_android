@@ -92,6 +92,33 @@ class _MyAppState extends State<MyApp> {
                         },
                       );
                     },
+                    // ESTE ES EL MANEJO DE “VENTANA NUEVA”
+                    onCreateWindow: (controller, createWindowRequest) async {
+                      // Por ejemplo, abrimos la nueva URL en otra pantalla con InAppWebView
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) {
+                          return Scaffold(
+                            appBar: AppBar(
+                              title: Text('Nueva pestaña'),
+                            ),
+                            body: InAppWebView(
+                              // Usamos la misma configuración que quieras
+                              initialUrlRequest: createWindowRequest.request,
+                              initialSettings: InAppWebViewSettings(
+                                javaScriptEnabled: true,
+                                domStorageEnabled: true,
+                                supportMultipleWindows: true,
+                              ),
+                              onDownloadStartRequest: (controller, url) async {
+                              },
+                            ),
+                          );
+                        }),
+                      );
+                      // Retorna true para indicar que te hiciste cargo de crear la ventana
+                      return true;
+                    },
                     onDownloadStartRequest: (controller, url) async {
                       String fileUrl = url.url.uriValue.toString();
                       debugPrint('URL del archivo: $fileUrl');
