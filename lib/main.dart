@@ -67,8 +67,22 @@ class _MyAppState extends State<MyApp> {
                         callback: (args) async {
                           String base64Data = args[0].toString().split(',')[1];
 
-                          Directory? directory = await getExternalStorageDirectory();
-                          String filePath = '${directory?.path}/archivo_blob1.pdf';
+                          // Obtener la fecha y hora actual
+                          DateTime fecha_actual = DateTime.now();
+                          String nombre_archivo = "${fecha_actual.day.toString().padLeft(2, '0')}${fecha_actual.month.toString().padLeft(2, '0')}${fecha_actual.year}${fecha_actual.hour.toString().padLeft(2, '0')}${fecha_actual.minute.toString().padLeft(2, '0')}";
+
+                          // Obtener la carpeta de Descargas
+                          Directory? downloadsDirectory = await getDownloadsDirectory();
+                          if (downloadsDirectory == null) {
+                            Fluttertoast.showToast(
+                              msg: 'No se pudo acceder a la carpeta de Descargas',
+                              backgroundColor: Colors.red,
+                              textColor: Colors.white,
+                              fontSize: 16.0,
+                            );
+                            return;
+                          }
+                          String filePath = '${directory?.path}/$nombre_archivo.pdf';
 
                           File file = File(filePath);
                           await file.writeAsBytes(base64Decode(base64Data));
