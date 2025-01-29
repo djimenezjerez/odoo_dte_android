@@ -41,7 +41,7 @@ class _MyAppState extends State<MyApp> {
           appBar: AppBar(
             toolbarHeight: 0,
           ),
-          body: Stack( // 🔹 Usa Stack para mostrar el indicador de carga
+          body: Stack(
             children: [
               Column(
                 children: <Widget>[
@@ -64,13 +64,12 @@ class _MyAppState extends State<MyApp> {
                       onWebViewCreated: (controller) {
                         this.webViewController = controller;
 
-                        // 🔹 Agregar el handler para recibir el archivo desde JavaScript
                         webViewController.addJavaScriptHandler(
                           handlerName: "downloadBlob",
                           callback: (args) async {
                             try {
                               setState(() {
-                                isDownloading = true; // 🔹 Activa el indicador de carga
+                                isDownloading = true;
                               });
 
                               String base64Data = args[0].toString().split(',')[1];
@@ -109,7 +108,7 @@ class _MyAppState extends State<MyApp> {
                               );
                             } finally {
                               setState(() {
-                                isDownloading = false; // 🔹 Desactiva el indicador de carga
+                                isDownloading = false;
                               });
                             }
                           },
@@ -197,12 +196,11 @@ class _MyAppState extends State<MyApp> {
                 ],
               ),
 
-              // 🔹 Indicador de carga superpuesto cuando isDownloading = true
               if (isDownloading)
                 Container(
-                  color: Colors.black54, // 🔹 Fondo semitransparente
+                  color: Colors.black54,
                   child: Center(
-                    child: CircularProgressIndicator(), // 🔹 Spinner de carga
+                    child: CircularProgressIndicator(),
                   ),
                 ),
             ],
