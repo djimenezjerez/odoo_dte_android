@@ -91,6 +91,30 @@ class _MyAppState extends State<MyApp> {
                         },
                       );
                     },
+                    // ESTE ES EL MANEJO DE VENTANA NUEVA
+                    onCreateWindow: (controller, createWindowRequest) async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) {
+                          return Scaffold(
+                            appBar: AppBar(
+                              title: Text('Nueva pestaña'),
+                            ),
+                            body: InAppWebView(
+                              initialUrlRequest: createWindowRequest.request,
+                              initialSettings: InAppWebViewSettings(
+                                javaScriptEnabled: true,
+                                domStorageEnabled: true,
+                                supportMultipleWindows: true,
+                              ),
+                              onDownloadStartRequest: (controller, url) async {
+                              },
+                            ),
+                          );
+                        }),
+                      );
+                      return true;
+                    },
                     onDownloadStartRequest: (controller, url) async {
                       String fileUrl = url.url.uriValue.toString();
                       debugPrint('**** ----- !!!! URL del archivo: $fileUrl , MimeType: ${url.mimeType}');
