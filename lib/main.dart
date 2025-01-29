@@ -69,7 +69,7 @@ class _MyAppState extends State<MyApp> {
 
                           // Obtener la fecha y hora actual
                           DateTime fecha_actual = DateTime.now();
-                          String nombre_archivo = "${fecha_actual.day.toString().padLeft(2, '0')}${fecha_actual.month.toString().padLeft(2, '0')}${fecha_actual.year}${fecha_actual.hour.toString().padLeft(2, '0')}${fecha_actual.minute.toString().padLeft(2, '0')}";
+                          String nombre_archivo = fecha_actual.toUtc().millisecondsSinceEpoch.toString();
 
                           // Obtener la carpeta de Descargas
                           Directory? downloadsDirectory = await getDownloadsDirectory();
