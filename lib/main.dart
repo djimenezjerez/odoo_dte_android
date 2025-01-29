@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert'; // Para base64Decode
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -54,6 +53,11 @@ class _MyAppState extends State<MyApp> {
                       supportMultipleWindows: true,
                       useOnDownloadStart: true,
                     ),
+                    onPermissionRequest: (controller, request) async {
+                      return PermissionResponse(
+                          resources: request.resources,
+                          action: PermissionResponseAction.GRANT);
+                    },
                     onWebViewCreated: (controller) {
                       this.webViewController = controller;
 
@@ -118,7 +122,7 @@ class _MyAppState extends State<MyApp> {
                     },
                     onDownloadStartRequest: (controller, url) async {
                       String fileUrl = url.url.uriValue.toString();
-                      debugPrint('URL del archivo: $fileUrl');
+                      debugPrint('**** ----- !!!! URL del archivo: $fileUrl , MimeType: ${url.mimeType}');
                       if (fileUrl.toLowerCase().startsWith('blob:')) {
                         Fluttertoast.showToast(
                           msg: 'Detectado archivo BLOB, intentando descargar...',
@@ -129,17 +133,39 @@ class _MyAppState extends State<MyApp> {
 
                         // Ejecuta JavaScript para convertir el Blob en un archivo descargable
                         String jsCode = """
-                        (async function() {
-                          const blobUrl = "$fileUrl";
-                          const response = await fetch(blobUrl);
-                          const blob = await response.blob();
-                          const reader = new FileReader();
-                          reader.readAsDataURL(blob);
-                          reader.onloadend = function() {
-                            window.flutter_inappwebview.callHandler('downloadBlob', reader.result);
-                          }
-                        })();
-                      """;
+                          (async function() {
+                            const blobUrl = "$fileUrl";
+                            const response = await fetch(blobUrl);
+                            const blob = await response.blob();
+                            const reader = new FileReader();
+                            reader.readAsDataURL(blob);
+                            reader.onloadend = function() {
+                              window.flutter_inappwebview.callHandler('downloadBlob', reader.result);
+                            }
+                          })();
+                        """;
+                        webViewController.evaluateJavascript(source: jsCode);
+                        return;
+                      } else {
+                        Fluttertoast.showToast(
+                          msg: 'Detectado archivo ATTACHMENT, intentando descargar... \n $fileUrl',
+                          backgroundColor: Colors.red,
+                          textColor: Colors.white,
+                          fontSize: 16.0,
+                        );
+
+                        String jsCode = """
+                          (async function() {
+                            const blobUrl = "$fileUrl";
+                            const response = await fetch(blobUrl);
+                            const blob = await response.blob();
+                            const reader = new FileReader();
+                            reader.readAsDataURL(blob);
+                            reader.onloadend = function() {
+                              window.flutter_inappwebview.callHandler('downloadBlob', reader.result);
+                            }
+                          })();
+                        """;
                         webViewController.evaluateJavascript(source: jsCode);
                         return;
                       }

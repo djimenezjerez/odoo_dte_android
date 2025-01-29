@@ -9,8 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_downloader: ^1.11.8
-  flutter_file_downloader: ^2.0.0
   flutter_inappwebview: ^6.1.5
   fluttertoast: ^8.2.10
   path_provider: ^2.1.5
