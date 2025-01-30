@@ -20,6 +20,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late InAppWebViewController webViewController;
+  bool isDownloading = false;
+
   void onPopInvokedWithResult(bool onPop, Object? _) async {
     if (onPop) {
       return;
@@ -65,29 +67,46 @@ class _MyAppState extends State<MyApp> {
                       webViewController.addJavaScriptHandler(
                         handlerName: "downloadBlob",
                         callback: (args) async {
-                          String base64Data = args[0].toString().split(',')[1];
+                          try {
+                            setState(() {
+                              isDownloading = true;
+                            });
 
-                          // Obtener la fecha y hora actual
-                          DateTime fecha_actual = DateTime.now();
-                          String nombre_archivo = fecha_actual.toUtc().millisecondsSinceEpoch.toString();
+                            String base64Data = args[0].toString().split(',')[1];
 
-                          // Obtener la carpeta de Descargas
-                          Directory? downloadsDirectory = await getDownloadsDirectory();
-                          if (downloadsDirectory == null) {
-                            downloadsDirectory = await getApplicationDocumentsDirectory();
+                            // Obtener la fecha y hora actual
+                            DateTime fecha_actual = DateTime.now();
+                            String nombre_archivo = fecha_actual.toUtc().millisecondsSinceEpoch.toString();
+
+                            // Obtener la carpeta de Descargas
+                            Directory? downloadsDirectory = await getDownloadsDirectory();
+                            if (downloadsDirectory == null) {
+                              downloadsDirectory = await getApplicationDocumentsDirectory();
+                            }
+
+                            String filePath = '${downloadsDirectory?.path}/$nombre_archivo.pdf';
+
+                            File file = File(filePath);
+                            await file.writeAsBytes(base64Decode(base64Data));
+
+                            Fluttertoast.showToast(
+                              msg: 'Archivo guardado en: $filePath',
+                              backgroundColor: Colors.green,
+                              textColor: Colors.white,
+                              fontSize: 16.0,
+                            );
+                          } catch (e) {
+                            Fluttertoast.showToast(
+                              msg: 'Error al descargar: $e',
+                              backgroundColor: Colors.red,
+                              textColor: Colors.white,
+                              fontSize: 16.0,
+                            );
+                          } finally {
+                            setState(() {
+                              isDownloading = false;
+                            });
                           }
-
-                          String filePath = '${downloadsDirectory?.path}/$nombre_archivo.pdf';
-
-                          File file = File(filePath);
-                          await file.writeAsBytes(base64Decode(base64Data));
-
-                          Fluttertoast.showToast(
-                            msg: 'Archivo guardado en: $filePath',
-                            backgroundColor: Colors.green,
-                            textColor: Colors.white,
-                            fontSize: 16.0,
-                          );
                         },
                       );
                     },
@@ -116,6 +135,10 @@ class _MyAppState extends State<MyApp> {
                       return true;
                     },
                     onDownloadStartRequest: (controller, url) async {
+                      setState(() {
+                        isDownloading = true; // 🔹 Activa el indicador de carga
+                      });
+
                       String fileUrl = url.url.uriValue.toString();
                       debugPrint('**** ----- !!!! URL del archivo: $fileUrl , MimeType: ${url.mimeType}');
                       if (fileUrl.toLowerCase().startsWith('blob:') || url.mimeType == 'application/pdf' || fileUrl.toLowerCase().startsWith("data:application/octet-stream;base64,")){
@@ -152,7 +175,14 @@ class _MyAppState extends State<MyApp> {
                       }
                     },
                   ),
-                )
+                ),
+                if (isDownloading)
+                  Container(
+                    color: Colors.black54,
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
               ],
             ),
           ),
