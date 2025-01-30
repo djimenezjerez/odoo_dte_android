@@ -6,6 +6,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,10 +24,33 @@ class _MyAppState extends State<MyApp> {
   bool isDownloading = false;
   bool isConnected = false; // variable para verificar conexion de servidor
   bool isLoading = false; // se pone en True mientras se realiza la verficacion de conexion, al  finalizar la verificacion de conex se pone en false
-  String url = 'http://190.186.18.34:8055';
+  String url = '';
   @override
   void initState() {
     super.initState();
+    checkConnection();
+  }
+
+  Future<void> _loadSavedUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      url = prefs.getString('server_url') ?? 'http://190.186.18.34:8055';
+    });
+    checkConnection();
+  }
+
+  Future<void> _saveUrl(String newUrl) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('server_url', newUrl);
+    setState(() {
+      url = newUrl;
+      isConnected = false;
+      isLoading = true;
+    });
+    if (webViewController != null) {
+      await webViewController.loadUrl(
+          urlRequest: URLRequest(url: WebUri(newUrl)));
+    }
     checkConnection();
   }
 
@@ -47,7 +71,7 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       isLoading = true;
     });
-    debugPrint("verificando conexion: $isLoading");
+
     isConnected = await checkUrlConnectionHttpClient(url);
     // isConnected = await checkUrlConnectionHttp(url)
     debugPrint("existe conexion: $isConnected");
@@ -219,34 +243,102 @@ class _MyAppState extends State<MyApp> {
             ]
           )
           : Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "No se pudo conectar a la URL ❌",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          url,
-                          style: TextStyle(color: Colors.blueGrey,fontSize: 16),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: checkConnection,
-                          child: Text("Reintentar conexión"),
-                        ),
-                        SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: checkConnection,
-                          child: Text("Configuración"),
-                        ),
-                      ],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("No hay conexión con el servidor ❌",
+                    style: TextStyle(fontSize: 18)),
+                Text(url,
+                    style: TextStyle(color: Colors.blueGrey),
+                    textAlign: TextAlign.center),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: checkConnection,
+                  child: Text("Reintentar conexión"),
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ConfiguracionScreen(
+                        initialUrl: url,
+                        onUrlSaved: _saveUrl,
+                      ),
                     ),
                   ),
+                  child: Text("Configuración"),
+                ),
+              ],
+            ),
+          ),
         ),
         onPopInvokedWithResult: onPopInvokedWithResult,
       )
+    );
+  }
+}
+
+// Nueva pantalla de configuración
+class ConfiguracionScreen extends StatefulWidget {
+  final String initialUrl;
+  final Function(String) onUrlSaved;
+
+  const ConfiguracionScreen(
+      {required this.initialUrl, required this.onUrlSaved});
+
+  @override
+  _ConfiguracionScreenState createState() => _ConfiguracionScreenState();
+}
+
+class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
+  late TextEditingController _urlController;
+
+  @override
+  void initState() {
+    super.initState();
+    _urlController = TextEditingController(text: widget.initialUrl);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Configurar Servidor')),
+      body: Padding(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          children: [
+            TextField(
+              controller: _urlController,
+              decoration: InputDecoration(
+                labelText: 'URL del servidor',
+                hintText: 'Ej: http://192.168.1.100:8080',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancelar'),
+                ),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_urlController.text.trim().isNotEmpty) {
+                      widget.onUrlSaved(_urlController.text.trim());
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: Text('Guardar'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
