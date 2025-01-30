@@ -106,16 +106,6 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       isLoading = true;
     });
-<<<<<<< HEAD
-
-    isConnected = await checkUrlConnectionHttpClient(url);
-    // isConnected = await checkUrlConnectionHttp(url)
-    debugPrint("existe conexion: $isConnected");
-    setState(() {
-      isLoading = false;
-    });
-    debugPrint("finalizo verificando conexion: $isLoading");
-=======
     if (!await this.verificarConfiguracion()) {
       this.abrirConfiguracion();
     } else {
@@ -128,7 +118,6 @@ class _MyAppState extends State<MyApp> {
       });
       debugPrint("finalizo verificando conexion: $isLoading");
     }
->>>>>>> development
   }
 
   void abrirConfiguracion() {
