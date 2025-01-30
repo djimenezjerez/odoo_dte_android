@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:convert'; // Para base64Decode
 import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:path/path.dart' as p;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +26,7 @@ class _MyAppState extends State<MyApp> {
   bool isDownloading = false;
   bool isConnected = false; // variable para verificar conexion de servidor
   bool isLoading = false; // se pone en True mientras se realiza la verficacion de conexion, al  finalizar la verificacion de conex se pone en false
-  String url = 'http://190.186.18.34:8055';
+  String url = '';
   @override
   void initState() {
     super.initState();
@@ -42,20 +45,62 @@ class _MyAppState extends State<MyApp> {
       return false;
     }
   }
+
+  Future<bool> verificarConfiguracion() async {
+    bool resultado = false;
+    try
+    {
+      Directory directorioBase = await getApplicationDocumentsDirectory();
+      File archivoConfig = await File(p.join(directorioBase.path, 'Config.ini'));
+      if (!archivoConfig.existsSync()) {
+        archivoConfig.writeAsStringSync('HOST=');
+      }
+      final contenido = await archivoConfig.readAsString();
+      final List<String> filas = contenido.split('\n');
+      filas.forEach((fila) {
+        List<String> datos = fila.split('=');
+        if (datos[0].toUpperCase() == 'HOST') {
+          String valor = datos[1].trim();
+          if (valor.length > 0) {
+            this.url = valor;
+            resultado = true;
+          }
+        }
+      });
+      if (!resultado) {
+        archivoConfig.writeAsStringSync('HOST=');
+      }
+    }
+    catch (e) {}
+    finally {
+      return resultado;
+    }
+  }
+
   /// llamar a la funcion de verificacion de conexion
   void checkConnection() async {
     setState(() {
       isLoading = true;
     });
-    debugPrint("verificando conexion: $isLoading");
-    isConnected = await checkUrlConnectionHttpClient(url);
-    // isConnected = await checkUrlConnectionHttp(url)
-    debugPrint("existe conexion: $isConnected");
-    setState(() {
-      isLoading = false;
-    });
-    debugPrint("finalizo verificando conexion: $isLoading");
+    if (!await this.verificarConfiguracion()) {
+      this.abrirConfiguracion();
+    } else {
+      debugPrint("verificando conexion: $isLoading");
+      isConnected = await checkUrlConnectionHttpClient(url);
+      // isConnected = await checkUrlConnectionHttp(url)
+      debugPrint("existe conexion: $isConnected");
+      setState(() {
+        isLoading = false;
+      });
+      debugPrint("finalizo verificando conexion: $isLoading");
+    }
   }
+
+  void abrirConfiguracion() {
+    // TODO: Abrir la ventana de configuración
+    debugPrint("\n\n ******** NAVEGAR A LA PÁGINA DE CONFIGURACIÓN ******** \n\n");
+  }
+
   void onPopInvokedWithResult(bool onPop, Object? _) async {
     if (onPop) {
       return;
@@ -86,6 +131,7 @@ class _MyAppState extends State<MyApp> {
                     child: InAppWebView(
                       initialUrlRequest: URLRequest(
                         url: WebUri(url),
+                        timeoutInterval: 20,
                       ),
                       initialSettings: InAppWebViewSettings(
                         javaScriptEnabled: true,
@@ -93,6 +139,23 @@ class _MyAppState extends State<MyApp> {
                         supportMultipleWindows: true,
                         useOnDownloadStart: true,
                       ),
+                      /*
+                      gestureRecognizers: Set()
+                        ..add(Factory<VerticalDragGestureRecognizer>(() => VerticalDragGestureRecognizer()
+                            ..onDown = (DragDownDetails dragDownDetails) {
+                              webViewController.getScrollY().then((value) {
+                                if (value == 0 && dragDownDetails.globalPosition.direction < 1) {
+                                  setState(() {
+                                    isLoading = true;
+                                  });
+                                  webViewController.reload();
+                                  this.checkConnection();
+                                }
+                              });
+                            }
+                          )
+                        ),
+                      */
                       onPermissionRequest: (controller, request) async {
                         return PermissionResponse(
                             resources: request.resources,
@@ -122,7 +185,7 @@ class _MyAppState extends State<MyApp> {
                                 downloadsDirectory = await getApplicationDocumentsDirectory();
                               }
 
-                              String filePath = '${downloadsDirectory?.path}/$nombre_archivo.pdf';
+                              String filePath = p.join(downloadsDirectory.path, '$nombre_archivo.pdf');
 
                               File file = File(filePath);
                               await file.writeAsBytes(base64Decode(base64Data));
