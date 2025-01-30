@@ -174,7 +174,7 @@ class _MyAppState extends State<MyApp> {
                       },
                       onDownloadStartRequest: (controller, url) async {
                         setState(() {
-                          isDownloading = true; // 🔹 Activa el indicador de carga
+                          isDownloading = true; //Activa el indicador de carga
                         });
 
                         String fileUrl = url.url.uriValue.toString();
@@ -234,7 +234,7 @@ class _MyAppState extends State<MyApp> {
                           style: TextStyle(fontSize: 18),
                         ),
                         Text(
-                          url, // 🔹 Muestra la URL en una segunda línea
+                          url,
                           style: TextStyle(color: Colors.blueGrey,fontSize: 16),
                           textAlign: TextAlign.center,
                         ),
