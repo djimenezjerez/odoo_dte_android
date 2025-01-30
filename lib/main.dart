@@ -21,7 +21,41 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late InAppWebViewController webViewController;
   bool isDownloading = false;
+  bool isConnected = false; // variable para verificar conexion de servidor
+  bool isLoading = false; // se pone en True mientras se realiza la verficacion de conexion, al  finalizar la verificacion de conex se pone en false
+  String url = 'http://190.186.18.34:8055';
+  @override
+  void initState() {
+    super.initState();
+    checkConnection();
+  }
 
+  /// Verificar conexion con 'HttpClient'
+  Future<bool> checkUrlConnectionHttpClient(String url) async {
+    try {
+      debugPrint("URL: $url");
+      final uri = Uri.parse(url);
+      final request = await HttpClient().headUrl(uri);
+      final response = await request.close();
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+  /// llamar a la funcion de verificacion de conexion
+  void checkConnection() async {
+    setState(() {
+      isLoading = true;
+    });
+    debugPrint("verificando conexion: $isLoading");
+    isConnected = await checkUrlConnectionHttpClient(url);
+    // isConnected = await checkUrlConnectionHttp(url)
+    debugPrint("existe conexion: $isConnected");
+    setState(() {
+      isLoading = false;
+    });
+    debugPrint("finalizo verificando conexion: $isLoading");
+  }
   void onPopInvokedWithResult(bool onPop, Object? _) async {
     if (onPop) {
       return;
@@ -41,14 +75,17 @@ class _MyAppState extends State<MyApp> {
           appBar: AppBar(
             toolbarHeight: 0,
           ),
-          body: Stack(
+          body: isLoading
+            ? Center(child: CircularProgressIndicator()) // Muestra el loader mientras se verifica la conexión
+            : isConnected
+          ? Stack(
             children: [
               Column(
                 children: <Widget>[
                   Expanded(
                     child: InAppWebView(
                       initialUrlRequest: URLRequest(
-                        url: WebUri('http://190.186.18.34:805'),
+                        url: WebUri(url),
                       ),
                       initialSettings: InAppWebViewSettings(
                         javaScriptEnabled: true,
@@ -187,7 +224,33 @@ class _MyAppState extends State<MyApp> {
                   ),
                 ),
             ]
-          ),
+          )
+          : Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "No se pudo conectar a la URL ❌",
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        Text(
+                          url, // 🔹 Muestra la URL en una segunda línea
+                          style: TextStyle(color: Colors.blueGrey,fontSize: 16),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: checkConnection,
+                          child: Text("Reintentar conexión"),
+                        ),
+                        SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: checkConnection,
+                          child: Text("Configuración"),
+                        ),
+                      ],
+                    ),
+                  ),
         ),
         onPopInvokedWithResult: onPopInvokedWithResult,
       )
