@@ -180,13 +180,6 @@ class _MyAppState extends State<MyApp> {
                         String fileUrl = url.url.uriValue.toString();
                         debugPrint('**** ----- !!!! URL del archivo: $fileUrl , MimeType: ${url.mimeType}');
                         if (fileUrl.toLowerCase().startsWith('blob:') || url.mimeType == 'application/pdf' || fileUrl.toLowerCase().startsWith("data:application/octet-stream;base64,")){
-                          Fluttertoast.showToast(
-                            msg: 'BLOB, intentando descargar... \n ${url.mimeType} \n $fileUrl',
-                            backgroundColor: Colors.orange,
-                            textColor: Colors.white,
-                            fontSize: 16.0,
-                          );
-
                           // Ejecuta JavaScript para convertir el Blob en un archivo descargable
                           String jsCode = """
                           (async function() {
