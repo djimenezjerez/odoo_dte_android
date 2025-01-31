@@ -1,15 +1,12 @@
 import 'dart:async';
-import 'dart:convert'; // Para base64Decode
+import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart'; // Nuevo import
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,13 +22,14 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late InAppWebViewController webViewController;
   bool isDownloading = false;
-  bool isConnected = false; // variable para verificar conexion de servidor
-  bool isLoading = false; // se pone en True mientras se realiza la verficacion de conexion, al  finalizar la verificacion de conex se pone en false
-  String url = '';
+  bool isConnected = false;
+  bool isLoading = false;
+  String url = 'http://190.186.18.34:8055'; // Valor por defecto
+
   @override
   void initState() {
     super.initState();
-    checkConnection();
+    _loadSavedUrl();
   }
 
   Future<void> _loadSavedUrl() async {
@@ -45,19 +43,24 @@ class _MyAppState extends State<MyApp> {
   Future<void> _saveUrl(String newUrl) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('server_url', newUrl);
-    setState(() {
-      url = newUrl;
-      isConnected = false;
-      isLoading = true;
-    });
+
+    if (mounted) {
+      setState(() {
+        url = newUrl;
+        isConnected = false;
+        isLoading = true;
+      });
+    }
+
+    checkConnection();
+
     if (webViewController != null) {
       await webViewController.loadUrl(
-          urlRequest: URLRequest(url: WebUri(newUrl)));
+          urlRequest: URLRequest(url: WebUri(newUrl))
+      );
     }
-    checkConnection();
   }
 
-  /// Verificar conexion con 'HttpClient'
   Future<bool> checkUrlConnectionHttpClient(String url) async {
     try {
       debugPrint("URL: $url");
@@ -70,67 +73,14 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Future<bool> verificarConfiguracion() async {
-    bool resultado = false;
-    try
-    {
-      Directory directorioBase = await getApplicationDocumentsDirectory();
-      File archivoConfig = await File(p.join(directorioBase.path, 'Config.ini'));
-      if (!archivoConfig.existsSync()) {
-        archivoConfig.writeAsStringSync('HOST=');
-      }
-      final contenido = await archivoConfig.readAsString();
-      final List<String> filas = contenido.split('\n');
-      filas.forEach((fila) {
-        List<String> datos = fila.split('=');
-        if (datos[0].toUpperCase() == 'HOST') {
-          String valor = datos[1].trim();
-          if (valor.length > 0) {
-            this.url = valor;
-            resultado = true;
-          }
-        }
-      });
-      if (!resultado) {
-        archivoConfig.writeAsStringSync('HOST=');
-      }
-    }
-    catch (e) {}
-    finally {
-      return resultado;
-    }
-  }
-
-  /// llamar a la funcion de verificacion de conexion
   void checkConnection() async {
-    setState(() {
-      isLoading = true;
-    });
-    if (!await this.verificarConfiguracion()) {
-      this.abrirConfiguracion();
-    } else {
-      debugPrint("verificando conexion: $isLoading");
-      isConnected = await checkUrlConnectionHttpClient(url);
-      // isConnected = await checkUrlConnectionHttp(url)
-      debugPrint("existe conexion: $isConnected");
-      setState(() {
-        isLoading = false;
-      });
-      debugPrint("finalizo verificando conexion: $isLoading");
-    }
-  }
-
-  void abrirConfiguracion() {
-    // TODO: Abrir la ventana de configuración
-    debugPrint("\n\n ******** NAVEGAR A LA PÁGINA DE CONFIGURACIÓN ******** \n\n");
+    setState(() => isLoading = true);
+    isConnected = await checkUrlConnectionHttpClient(url);
+    setState(() => isLoading = false);
   }
 
   void onPopInvokedWithResult(bool onPop, Object? _) async {
-    if (onPop) {
-      return;
-    }
-    bool canBack = await webViewController.canGoBack();
-    if (canBack) {
+    if (!onPop && await webViewController.canGoBack()) {
       webViewController.goBack();
     }
   }
@@ -141,155 +91,91 @@ class _MyAppState extends State<MyApp> {
       home: PopScope(
         canPop: false,
         child: Scaffold(
-          appBar: AppBar(
-            toolbarHeight: 0,
-          ),
+          appBar: AppBar(toolbarHeight: 0),
           body: isLoading
-            ? Center(child: CircularProgressIndicator()) // Muestra el loader mientras se verifica la conexión
-            : isConnected
-          ? Stack(
+              ? Center(child: CircularProgressIndicator())
+              : isConnected
+              ? Stack(
             children: [
               Column(
-                children: <Widget>[
+                children: [
                   Expanded(
                     child: InAppWebView(
-                      initialUrlRequest: URLRequest(
-                        url: WebUri(url),
-                        timeoutInterval: 20,
-                      ),
+                      initialUrlRequest: URLRequest(url: WebUri(url)),
                       initialSettings: InAppWebViewSettings(
                         javaScriptEnabled: true,
                         domStorageEnabled: true,
                         supportMultipleWindows: true,
                         useOnDownloadStart: true,
                       ),
-                      /*
-                      gestureRecognizers: Set()
-                        ..add(Factory<VerticalDragGestureRecognizer>(() => VerticalDragGestureRecognizer()
-                            ..onDown = (DragDownDetails dragDownDetails) {
-                              webViewController.getScrollY().then((value) {
-                                if (value == 0 && dragDownDetails.globalPosition.direction < 1) {
-                                  setState(() {
-                                    isLoading = true;
-                                  });
-                                  webViewController.reload();
-                                  this.checkConnection();
-                                }
-                              });
-                            }
-                          )
-                        ),
-                      */
                       onPermissionRequest: (controller, request) async {
-                        return PermissionResponse(
-                            resources: request.resources,
-                            action: PermissionResponseAction.GRANT);
+                        return Future.value(PermissionResponse(
+                          resources: request.resources,
+                          action: PermissionResponseAction.GRANT,
+                        ));
                       },
                       onWebViewCreated: (controller) {
-                        this.webViewController = controller;
-
-                        // Agregar el handler para recibir el archivo desde JavaScript
-                        webViewController.addJavaScriptHandler(
-                          handlerName: "downloadBlob",
-                          callback: (args) async {
-                            try {
-                              setState(() {
-                                isDownloading = true;
-                              });
-
-                              String base64Data = args[0].toString().split(',')[1];
-
-                              // Obtener la fecha y hora actual
-                              DateTime fecha_actual = DateTime.now();
-                              String nombre_archivo = fecha_actual.toUtc().millisecondsSinceEpoch.toString();
-
-                              // Obtener la carpeta de Descargas
-                              Directory? downloadsDirectory = await getDownloadsDirectory();
-                              if (downloadsDirectory == null) {
-                                downloadsDirectory = await getApplicationDocumentsDirectory();
+                        webViewController = controller;
+                        controller.addJavaScriptHandler(
+                            handlerName: "downloadBlob",
+                            callback: (args) async {
+                              try {
+                                setState(() => isDownloading = true);
+                                String base64Data =
+                                args[0].toString().split(',')[1];
+                                Directory? downloadsDirectory =
+                                await getDownloadsDirectory();
+                                String filePath =
+                                    '${downloadsDirectory?.path}/${DateTime.now().toUtc().millisecondsSinceEpoch}.pdf';
+                                await File(filePath).writeAsBytes(
+                                    base64Decode(base64Data));
+                                Fluttertoast.showToast(
+                                    msg: 'Archivo guardado: $filePath',
+                                    backgroundColor: Colors.green);
+                              } catch (e) {
+                                Fluttertoast.showToast(
+                                    msg: 'Error: $e',
+                                    backgroundColor: Colors.red);
+                              } finally {
+                                setState(() => isDownloading = false);
                               }
-
-                              String filePath = p.join(downloadsDirectory.path, '$nombre_archivo.pdf');
-
-                              File file = File(filePath);
-                              await file.writeAsBytes(base64Decode(base64Data));
-
-                              Fluttertoast.showToast(
-                                msg: 'Archivo guardado en: $filePath',
-                                backgroundColor: Colors.green,
-                                textColor: Colors.white,
-                                fontSize: 16.0,
-                              );
-                            } catch (e) {
-                              Fluttertoast.showToast(
-                                msg: 'Error al descargar: $e',
-                                backgroundColor: Colors.red,
-                                textColor: Colors.white,
-                                fontSize: 16.0,
-                              );
-                            } finally {
-                              setState(() {
-                                isDownloading = false;
-                              });
-                            }
-                          },
-                        );
+                            });
                       },
-                      // ESTE ES EL MANEJO DE VENTANA NUEVA
-                      onCreateWindow: (controller, createWindowRequest) async {
+                      onCreateWindow: (controller, request) async {
                         await Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) {
-                            return Scaffold(
-                              appBar: AppBar(
-                                title: Text('Nueva pestaña'),
-                              ),
-                              body: InAppWebView(
-                                initialUrlRequest: createWindowRequest.request,
-                                initialSettings: InAppWebViewSettings(
-                                  javaScriptEnabled: true,
-                                  domStorageEnabled: true,
-                                  supportMultipleWindows: true,
-                                ),
-                                onDownloadStartRequest: (controller, url) async {
-                                },
-                              ),
-                            );
-                          }),
-                        );
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => Scaffold(
+                                  appBar: AppBar(
+                                      title: Text('Nueva pestaña')),
+                                  body: InAppWebView(
+                                    initialUrlRequest:
+                                    request.request,
+                                    initialSettings:
+                                    InAppWebViewSettings(
+                                        javaScriptEnabled:
+                                        true),
+                                  ),
+                                )));
                         return true;
                       },
-                      onDownloadStartRequest: (controller, url) async {
-                        setState(() {
-                          isDownloading = true; //Activa el indicador de carga
-                        });
-
-                        String fileUrl = url.url.uriValue.toString();
-                        debugPrint('**** ----- !!!! URL del archivo: $fileUrl , MimeType: ${url.mimeType}');
-                        if (fileUrl.toLowerCase().startsWith('blob:') || url.mimeType == 'application/pdf' || fileUrl.toLowerCase().startsWith("data:application/octet-stream;base64,")){
-                          // Ejecuta JavaScript para convertir el Blob en un archivo descargable
+                      onDownloadStartRequest:
+                          (controller, request) async {
+                        setState(() => isDownloading = true);
+                        if (request.url.toString().startsWith('blob:')) {
                           String jsCode = """
-                          (async function() {
-                            const blobUrl = "$fileUrl";
-                            const response = await fetch(blobUrl);
-                            const blob = await response.blob();
-                            const reader = new FileReader();
-                            reader.readAsDataURL(blob);
-                            reader.onloadend = function() {
-                              window.flutter_inappwebview.callHandler('downloadBlob', reader.result);
-                            }
-                          })();
-                        """;
-                          webViewController.evaluateJavascript(source: jsCode);
-                          return;
-                        } else {
-                          debugPrint('**** ----- else');
-                          Fluttertoast.showToast(
-                            msg: 'Url no reconocido \n $fileUrl',
-                            backgroundColor: Colors.red,
-                            textColor: Colors.white,
-                            fontSize: 16.0,
-                          );
+                                      (async function() {
+                                        const response = await fetch("${request.url}");
+                                        const blob = await response.blob();
+                                        const reader = new FileReader();
+                                        reader.readAsDataURL(blob);
+                                        reader.onloadend = function() {
+                                          window.flutter_inappwebview.callHandler('downloadBlob', reader.result);
+                                        }
+                                      })();
+                                    """;
+                          controller.evaluateJavascript(
+                              source: jsCode);
                         }
                       },
                     ),
@@ -299,13 +185,11 @@ class _MyAppState extends State<MyApp> {
               if (isDownloading)
                 Container(
                   color: Colors.black54,
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
-            ]
+            ],
           )
-          : Center(
+              : Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -321,15 +205,20 @@ class _MyAppState extends State<MyApp> {
                 ),
                 SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ConfiguracionScreen(
-                        initialUrl: url,
-                        onUrlSaved: _saveUrl,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ConfiguracionScreen(
+                          initialUrl: url,
+                          onUrlSaved: (newUrl) {
+                            _saveUrl(newUrl);
+                            Navigator.pop(context); // Cerrar pantalla de configuración
+                          },
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                   child: Text("Configuración"),
                 ),
               ],
@@ -337,7 +226,7 @@ class _MyAppState extends State<MyApp> {
           ),
         ),
         onPopInvokedWithResult: onPopInvokedWithResult,
-      )
+      ),
     );
   }
 }
@@ -356,6 +245,7 @@ class ConfiguracionScreen extends StatefulWidget {
 
 class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   late TextEditingController _urlController;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -366,40 +256,56 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Configurar Servidor')),
+      appBar: AppBar(
+        title: Text('Configurar Servidor'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Padding(
         padding: EdgeInsets.all(20),
-        child: Column(
-          children: [
-            TextField(
-              controller: _urlController,
-              decoration: InputDecoration(
-                labelText: 'URL del servidor',
-                hintText: 'Ej: http://192.168.1.100:8080',
-                border: OutlineInputBorder(),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _urlController,
+                decoration: InputDecoration(
+                  labelText: 'URL del servidor',
+                  hintText: 'Ej: http://192.168.1.100:8080',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor ingrese una URL';
+                  }
+                  if (!value.startsWith('http://') &&
+                      !value.startsWith('https://')) {
+                    return 'La URL debe comenzar con http:// o https://';
+                  }
+                  return null;
+                },
               ),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Cancelar'),
-                ),
-                SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_urlController.text.trim().isNotEmpty) {
-                      widget.onUrlSaved(_urlController.text.trim());
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: Text('Guardar'),
-                ),
-              ],
-            ),
-          ],
+              SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        widget.onUrlSaved(_urlController.text.trim());
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    ),
+                    child: Text('Guardar Configuración'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
