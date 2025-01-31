@@ -232,18 +232,18 @@ class _MyAppState extends State<MyApp> {
 }
 
 // Nueva pantalla de configuración
-class ConfiguracionScreen extends StatefulWidget {
+class PantallaConfiguracion extends StatefulWidget {
   final String initialUrl;
   final Function(String) onUrlSaved;
 
-  const ConfiguracionScreen(
+  const PantallaConfiguracion(
       {required this.initialUrl, required this.onUrlSaved});
 
   @override
-  _ConfiguracionScreenState createState() => _ConfiguracionScreenState();
+  _PantallaConfiguracionState createState() => _PantallaConfiguracionState();
 }
 
-class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
+class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
   late TextEditingController _urlController;
   final _formKey = GlobalKey<FormState>();
 
