@@ -15,12 +15,12 @@ class PantallaPrincipal extends StatelessWidget {
   final Function(InAppWebViewController) onWebViewCreated;
 
   const PantallaPrincipal({
-    Key? key,
+    super.key,
     required this.url,
     required this.isDownloading,
     required this.onDownloadingChange,
     required this.onWebViewCreated,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -47,10 +47,14 @@ class PantallaPrincipal extends StatelessWidget {
                     callback: (args) async {
                       try {
                         onDownloadingChange(true); // Activar estado "descargando"
-                        String base64Data = args[0].toString().split(',')[1];
+                        var data = args[0];
+                        var mimeType = args[1];
+                        var contentDisposition = args[2];
+
+
+                        String base64Data = data.toString().split(',')[1];
                         DateTime fechaActual = DateTime.now();
-                        String nombreArchivo =
-                        fechaActual.toUtc().millisecondsSinceEpoch.toString();
+                        String nombreArchivo = fechaActual.toUtc().millisecondsSinceEpoch.toString();
                         Directory? downloadsDirectory =
                         await getDownloadsDirectory();
                         downloadsDirectory ??= await getApplicationDocumentsDirectory();
@@ -109,11 +113,11 @@ class PantallaPrincipal extends StatelessWidget {
                 },
                 onDownloadStartRequest: (controller, urlRequest) async {
                   onDownloadingChange(true); // activar "descargando"
-
                   String fileUrl = urlRequest.url.uriValue.toString();
-                  if (fileUrl.toLowerCase().startsWith('blob:') ||
-                      urlRequest.mimeType == 'application/pdf' ||
-                      fileUrl.toLowerCase().startsWith("data:application/octet-stream;base64,")) {
+                  if (
+                    fileUrl.toLowerCase().startsWith('blob:') ||
+                    fileUrl.toLowerCase().startsWith("data:application/octet-stream;base64,")
+                  ) {
                     String jsCode = """
                       (async function() {
                         const blobUrl = "$fileUrl";
@@ -122,7 +126,7 @@ class PantallaPrincipal extends StatelessWidget {
                         const reader = new FileReader();
                         reader.readAsDataURL(blob);
                         reader.onloadend = function() {
-                          window.flutter_inappwebview.callHandler('downloadBlob', reader.result);
+                          window.flutter_inappwebview.callHandler('downloadBlob', reader.result, ${urlRequest.mimeType}, ${urlRequest.contentDisposition});
                         }
                       })();
                     """;

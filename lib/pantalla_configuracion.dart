@@ -7,7 +7,7 @@ import 'dart:async';
 class ConfigPage extends StatefulWidget {
   final String urlActual;
 
-  const ConfigPage({Key? key, required this.urlActual}) : super(key: key);
+  const ConfigPage({super.key, required this.urlActual});
 
   @override
   _ConfigPageState createState() => _ConfigPageState();
@@ -71,10 +71,17 @@ class _ConfigPageState extends State<ConfigPage> {
       String nuevoContenido = lineas.join('\n');
       await archivoConfig.writeAsString(nuevoContenido);
 
-      Navigator.pop(context, nuevaUrl);
+      retornarVista(true, nuevaUrl);
     } catch (e) {
-      debugPrint('Error guardando la URL: $e');
-      // Podrías mostrar un Toast de error
+      retornarVista(false, e.toString());
+    }
+  }
+
+  void retornarVista(bool estado, String dato) {
+    if (estado) {
+      Navigator.pop(context, dato);
+    } else {
+      debugPrint('Error guardando la URL: $dato');
     }
   }
 

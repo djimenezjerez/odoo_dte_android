@@ -1,13 +1,9 @@
 import 'dart:async';
-import 'dart:convert'; // Para base64Decode
 import 'dart:io';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:path/path.dart' as p;
 import 'pantalla_configuracion.dart';
 import 'pantalla_error.dart';
@@ -22,7 +18,7 @@ Future<void> main() async {
 
 /// SECUANDARIO
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +32,7 @@ class MyApp extends StatelessWidget {
 
 /// HomeScreen
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -75,14 +71,14 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!archivoConfig.existsSync()) {
         archivoConfig.writeAsStringSync('HOST=');
       }
-      final contenido = await archivoConfig.readAsString();
+      final contenido = archivoConfig.readAsStringSync();
       final List<String> filas = contenido.split('\n');
       for (var fila in filas) {
         List<String> datos = fila.split('=');
         if (datos[0].toUpperCase() == 'HOST') {
           String valor = datos[1].trim();
           if (valor.isNotEmpty) {
-            this.url = valor;
+            url = valor;
             resultado = true;
           }
         }
@@ -102,8 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       isLoading = true;
     });
-    if (!await this.verificarConfiguracion()) {
-      this.abrirConfiguracion();
+    if (!await verificarConfiguracion()) {
+      abrirConfiguracion();
     } else {
       debugPrint("verificando conexion: $isLoading");
       isConnected = await checkUrlConnectionHttpClient(url);
@@ -121,13 +117,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final nuevaUrl = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ConfigPage(urlActual: this.url),
+        builder: (_) => ConfigPage(urlActual: url),
       ),
     );
 
     if (nuevaUrl != null && nuevaUrl is String && nuevaUrl.isNotEmpty) {
       setState(() {
-        this.url = nuevaUrl;
+        url = nuevaUrl;
       });
       checkConnection();
     }

@@ -6,11 +6,11 @@ class PantallaError extends StatelessWidget {
   final VoidCallback onOpenConfig;       // Acción para "Configuración"
 
   const PantallaError({
-    Key? key,
+    super.key,
     required this.url,
     required this.onRetryConnection,
     required this.onOpenConfig,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
