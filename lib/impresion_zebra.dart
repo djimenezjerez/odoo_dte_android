@@ -25,43 +25,40 @@ class ImpresionArchivosZpl{
     var status = await Permission.location.request();
     if (status.isGranted){
       FlutterBluePlus.startScan(timeout: Duration(seconds: 50));
-      FlutterBluePlus.scanResults.listen((List<ScanResult> results) {
+      FlutterBluePlus.scanResults.listen((List<ScanResult> results) async {
         var dispositivosConNombre = results.where((r) => r.device.platformName.isNotEmpty).toList();
         debugPrint("Resultados del escaneo: ${results.map((r) => r.device.platformName).toList()}");
         if (dispositivosConNombre.isNotEmpty) {
           zebraPrinter = dispositivosConNombre.first.device;
           FlutterBluePlus.stopScan();
+            await zebraPrinter!.connect();
+            enviarAImpresora();
         }
       });
-      if (zebraPrinter!=null){
-        await zebraPrinter!.connect();
-        _showDialog("Conectado", "Conectado a la impresora ${zebraPrinter!.platformName}");
-        enviarAImpresora();
-      }else{
-         _showDialog("No se encontraron impresoras", "No se encontraron impresoras Zebra.");
-      }
     } else {
-    _showDialog("Permiso Denegado", "Se necesitan permisos de ubicación para escanear dispositivos Bluetooth.");
+      _showDialog("Permiso Denegado", "Se necesitan permisos de ubicación para escanear dispositivos Bluetooth.");
     }
   }
    void enviarAImpresora() async {
-    try{
-      List<BluetoothService> services = await zebraPrinter!.discoverServices();
-      for (BluetoothService service in services) {
-        for (BluetoothCharacteristic characteristic in service.characteristics) {
-          if (characteristic.properties.write) {
-            debugPrint("Característica de escritura encontrada: ${characteristic.uuid}");
-            debugPrint("UUID: ${characteristic.uuid} - Propiedades: ${characteristic.properties}");
-            writeCharacteristic = characteristic;
-            await enviarArchivo(characteristic);
-            break;
+    if (zebraPrinter!=null){
+      _showDialog("Conectado", "Conectado a la impresora ${zebraPrinter!.platformName}"); 
+      try{
+        List<BluetoothService> services = await zebraPrinter!.discoverServices();
+        for (BluetoothService service in services) {
+          for (BluetoothCharacteristic characteristic in service.characteristics) {
+            if (characteristic.properties.write) {
+              writeCharacteristic = characteristic;
+              //await enviarArchivo(characteristic);
+              break;
+            }
           }
         }
+      }catch (e) {
+        _showDialog("ERROR","Error al enviar el archivo: $e");
       }
-    }catch (e) {
-      _showDialog("ERROR","Error al enviar el archivo: $e");
+    }else{
+      _showDialog("⚠️","No se encontro Impresora");
     }
-    
   }
   Future<void> enviarArchivo(BluetoothCharacteristic characteristic) async {
   try {
