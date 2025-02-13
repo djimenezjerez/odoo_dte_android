@@ -39,6 +39,7 @@ class PantallaPrincipal extends StatelessWidget {
                   domStorageEnabled: true,
                   supportMultipleWindows: true,
                   useOnDownloadStart: true,
+                  clearCache: true,
                 ),
                 onWebViewCreated: (controller) {
                   onWebViewCreated(controller);
@@ -48,31 +49,47 @@ class PantallaPrincipal extends StatelessWidget {
                       try {
                         onDownloadingChange(true); // Activar estado "descargando"
                         var data = args[0];
-                        var mimeType = args[1];
-                        var contentDisposition = args[2];
-
-
+                        // var mimeType = args[1];
+                        // var contentDisposition = args[2];
                         String base64Data = data.toString().split(',')[1];
                         DateTime fechaActual = DateTime.now();
                         String nombreArchivo = fechaActual.toUtc().millisecondsSinceEpoch.toString();
                         Directory? downloadsDirectory =
                         await getDownloadsDirectory();
                         downloadsDirectory ??= await getApplicationDocumentsDirectory();
-
+                        // ----------------  identificar tipo de archivo-------------------
+                        List<int> fileBytes = base64Decode(base64Data);
+                        String fileText = utf8.decode(fileBytes, allowMalformed: true);
+                        String fileExtension = 'pdf';
+                        if (fileText.startsWith('%PDF')) {
+                          fileExtension = 'pdf';
+                        } else if (fileText.startsWith('^XA') && fileText.endsWith('^XZ')) { 
+                          fileExtension = 'zpl';
+                        }
+                        // --------------------------------------------------------------
                         String filePath = p.join(
                           downloadsDirectory.path,
-                          '$nombreArchivo.pdf',
+                          '$nombreArchivo.$fileExtension',
                         );
 
                         File file = File(filePath);
                         await file.writeAsBytes(base64Decode(base64Data));
-
                         Fluttertoast.showToast(
                           msg: 'Archivo guardado en: $filePath',
                           backgroundColor: Colors.green,
                           textColor: Colors.white,
                           fontSize: 16.0,
                         );
+                        // --------si es zpl mandar a impresora zebra--------------------
+                        if (fileExtension.contains('zpl')){
+                          Fluttertoast.showToast(
+                          msg: 'archivo detectado como zpl, se enviará a impresora zebra',
+                          backgroundColor: Colors.green,
+                          textColor: Colors.white,
+                          fontSize: 16.0,
+                          );
+                        }
+                        //---------------------------------------------------------------
                       } catch (e) {
                         Fluttertoast.showToast(
                           msg: 'Error al descargar: $e',
@@ -116,7 +133,8 @@ class PantallaPrincipal extends StatelessWidget {
                   String fileUrl = urlRequest.url.uriValue.toString();
                   if (
                     fileUrl.toLowerCase().startsWith('blob:') ||
-                    fileUrl.toLowerCase().startsWith("data:application/octet-stream;base64,")
+                    fileUrl.toLowerCase().startsWith("data:application/octet-stream;base64,") ||
+                    ((urlRequest.mimeType?.toLowerCase().startsWith('text/plain') ?? false) && (urlRequest.suggestedFilename?.toLowerCase().endsWith('.zpl')?? false))
                   ) {
                     String jsCode = """
                       (async function() {
@@ -126,11 +144,12 @@ class PantallaPrincipal extends StatelessWidget {
                         const reader = new FileReader();
                         reader.readAsDataURL(blob);
                         reader.onloadend = function() {
-                          window.flutter_inappwebview.callHandler('downloadBlob', reader.result, ${urlRequest.mimeType}, ${urlRequest.contentDisposition});
+                          window.flutter_inappwebview.callHandler('downloadBlob', reader.result);
                         }
                       })();
                     """;
                     controller.evaluateJavascript(source: jsCode);
+                    return;
                   } else {
                     Fluttertoast.showToast(
                       msg: 'Url no reconocido \n $fileUrl',
@@ -138,6 +157,7 @@ class PantallaPrincipal extends StatelessWidget {
                       textColor: Colors.white,
                       fontSize: 16.0,
                     );
+                     onDownloadingChange(false);
                   }
                 },
               ),
