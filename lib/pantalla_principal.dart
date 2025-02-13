@@ -1,3 +1,4 @@
+import 'package:boton_navegador/impresion_zebra.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -80,14 +81,10 @@ class PantallaPrincipal extends StatelessWidget {
                           textColor: Colors.white,
                           fontSize: 16.0,
                         );
-                        // --------si es zpl mandar a impresora zebra--------------------
+                        // --------si es zpl mandar a impresora zebra--------------------                    
                         if (fileExtension.contains('zpl')){
-                          Fluttertoast.showToast(
-                          msg: 'archivo detectado como zpl, se enviará a impresora zebra',
-                          backgroundColor: Colors.green,
-                          textColor: Colors.white,
-                          fontSize: 16.0,
-                          );
+                          ImpresionArchivosZpl impresion = ImpresionArchivosZpl(filePath: filePath, context: context);
+                          impresion.imprimirArchivo();
                         }
                         //---------------------------------------------------------------
                       } catch (e) {
