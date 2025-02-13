@@ -48,7 +48,7 @@ class ImpresionArchivosZpl{
           for (BluetoothCharacteristic characteristic in service.characteristics) {
             if (characteristic.properties.write) {
               writeCharacteristic = characteristic;
-              //await enviarArchivo(characteristic);
+              await enviarArchivo(characteristic);
               break;
             }
           }
