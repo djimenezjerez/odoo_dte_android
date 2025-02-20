@@ -1,5 +1,6 @@
+import 'package:boton_navegador/zebra_services.dart';
 import 'package:boton_navegador/btn_flotante.dart';
-import 'package:boton_navegador/impresion_zebra.dart';
+import 'package:boton_navegador/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -84,8 +85,17 @@ class PantallaPrincipal extends StatelessWidget {
                         );
                         // --------si es zpl mandar a impresora zebra--------------------                    
                         if (fileExtension.contains('zpl')){
-                          ImpresionArchivosZpl impresion = ImpresionArchivosZpl(filePath: filePath, context: context);
-                          impresion.imprimirArchivo();
+                          try{
+                            File file = File(filePath);
+                            String zplCode = await file.readAsString();
+                            debugPrint("ingreso");
+                            await ZebraService().printData(zplCode);
+                            // ImpresionArchivosZpl impresion = ImpresionArchivosZpl(filePath: filePath, context: context);
+                            // impresion.imprimirArchivo();
+                          }catch(e){
+                            showAlertDialog(context, "Error", "$e");
+                          }
+                           
                         }
                         //---------------------------------------------------------------
                       } catch (e) {
@@ -170,12 +180,16 @@ class PantallaPrincipal extends StatelessWidget {
             ),
           ),
           // llamada a boton flotante
-          BotonImpresoraMovil(
-            onPrinterSelected: (impresora) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Conectando a $impresora...")),
-              );
-            },
+          Stack(
+            children: [
+               BotonImpresoraMovil(
+                onPrinterSelected: (impresora) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Conectando a $impresora...")),
+                  );
+                },
+              ),
+            ]
           ),
       ],
     );
