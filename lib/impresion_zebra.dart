@@ -23,25 +23,41 @@ class ImpresionArchivosZpl{
   }
   void buscarImpresora() async {
     var status = await Permission.location.request();
-    if (status.isGranted){
-      FlutterBluePlus.startScan(timeout: Duration(seconds: 50));
-      FlutterBluePlus.scanResults.listen((List<ScanResult> results) async {
-        var dispositivosConNombre = results.where((r) => r.device.platformName.isNotEmpty).toList();
-        debugPrint("Resultados del escaneo: ${results.map((r) => r.device.platformName).toList()}");
-        if (dispositivosConNombre.isNotEmpty) {
-          zebraPrinter = dispositivosConNombre.first.device;
-          FlutterBluePlus.stopScan();
-            await zebraPrinter!.connect();
-            enviarAImpresora();
+    try{
+      if (status.isGranted){
+        List<BluetoothDevice> bondedDevices = await FlutterBluePlus.bondedDevices; // solo dispositivo vinculado
+        debugPrint("Resultados dispositivos vinculado: ${bondedDevices.map((r) => r.platformName).toList()}");
+        if (bondedDevices.isNotEmpty) {
+          zebraPrinter = bondedDevices.first;
+          // zebraPrinter = bondedDevices.last;
+          await zebraPrinter!.connect();
+          await Future.delayed(Duration(seconds: 2));
+          enviarAImpresora();
         }
-      });
-    } else {
-      _showDialog("Permiso Denegado", "Se necesitan permisos de ubicación para escanear dispositivos Bluetooth.");
+
+        // FlutterBluePlus.startScan(timeout: Duration(seconds: 50));
+        // FlutterBluePlus.scanResults.listen((List<ScanResult> results) async {
+        //   var dispositivosConNombre = results.where((r) => r.device.platformName.isNotEmpty).toList();
+        //   debugPrint("Resultados del escaneo: ${results.map((r) => r.device.platformName).toList()}");
+        //   debugPrint("Resultados del escane22o: ${results.map((r) => r.device.remoteId).toList()}");
+        //   if (dispositivosConNombre.isNotEmpty) {
+        //     zebraPrinter = dispositivosConNombre.first.device;
+        //     FlutterBluePlus.stopScan();
+        //     await zebraPrinter!.connect();
+        //     enviarAImpresora();
+        //   }
+        // });
+      } else {
+        _showDialog("Permiso Denegado", "Se necesitan permisos de ubicación para escanear dispositivos Bluetooth.");
+      }
+    }catch (e) {
+      debugPrint("error: $e");
+      _showDialog("ERROR","$e");
     }
   }
-   void enviarAImpresora() async {
+  void enviarAImpresora() async {
     if (zebraPrinter!=null){
-      _showDialog("Conectado", "Conectado a la impresora ${zebraPrinter!.platformName}"); 
+      //_showDialog("Conectado", "Conectado a la impresora ${zebraPrinter!.platformName}"); 
       try{
         List<BluetoothService> services = await zebraPrinter!.discoverServices();
         for (BluetoothService service in services) {
@@ -65,7 +81,7 @@ class ImpresionArchivosZpl{
     File file = File(filePath);
     String zplCode = await file.readAsString();
     List<int> zplBytes = utf8.encode(zplCode);
-    int fragmentSize = 240;
+    int fragmentSize = 135;
     int totalBytes = zplBytes.length;
     for (int i = 0; i < totalBytes; i += fragmentSize) {
       List<int> fragment = zplBytes.sublist(i, (i + fragmentSize) < totalBytes ? (i + fragmentSize) : totalBytes);
@@ -74,7 +90,8 @@ class ImpresionArchivosZpl{
      }
     // await writeCharacteristic!.write(zplBytes, withoutResponse: false);
   } catch (e) {
-    _showDialog("ERROR","❌ Error al enviar el archivo: $e");
+    debugPrint("Error al enviar el archivo: $e");
+    //_showDialog("ERROR","❌ Error al enviar el archivo: $e");
   }
 }
   void _showDialog(String title, String message) {
