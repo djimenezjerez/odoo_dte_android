@@ -1,3 +1,4 @@
+import 'package:boton_navegador/btn_flotante.dart';
 import 'package:boton_navegador/impresion_zebra.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -167,6 +168,14 @@ class PantallaPrincipal extends StatelessWidget {
             child: const Center(
               child: CircularProgressIndicator(),
             ),
+          ),
+          // llamada a boton flotante
+          BotonImpresoraMovil(
+            onPrinterSelected: (impresora) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Conectando a $impresora...")),
+              );
+            },
           ),
       ],
     );
