@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:zebrautil/zebra_device.dart';
+import 'package:zebrautil/zebra_printer.dart';
+import 'package:zebrautil/zebra_util.dart';
 
 class BotonImpresoraMovil extends StatefulWidget {
   final Function(String) onPrinterSelected;
@@ -11,6 +14,12 @@ class BotonImpresoraMovil extends StatefulWidget {
 
 class _BotonImpresoraMovilState extends State<BotonImpresoraMovil> {
   Offset position = const Offset(20, 20); // Posición inicial
+  List<ZebraDevice> impresoras = []; // Lista para almacenar impresoras detectadas
+  bool escaneando = false;
+
+  late ZebraPrinter zebraPrinter;
+  late ZebraController controller;
+
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +56,12 @@ class _BotonImpresoraMovilState extends State<BotonImpresoraMovil> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
+              TextButton(
+                onPressed: _buscarImpresoras,
+                child: escaneando
+                    ? const CircularProgressIndicator()
+                    : const Text("🔍 Escanear dispositivos"),
+              ),
               ListTile(
                 leading: const Icon(Icons.print),
                 title: const Text("Impresora Zebra 1"),
@@ -63,10 +78,46 @@ class _BotonImpresoraMovilState extends State<BotonImpresoraMovil> {
                   widget.onPrinterSelected("Impresora Zebra 2");
                 },
               ),
+              //  Expanded(
+              //   child: impresoras.isEmpty
+              //       ? const Center(child: Text("No se encontraron impresoras"))
+              //       : ListView.builder(
+              //           itemCount: impresoras.length,
+              //           itemBuilder: (context, index) {
+              //             ZebraDevice impresora = impresoras[index];
+              //             return ListTile(
+              //               title: Text(impresora.name),
+              //               subtitle: Text(impresora.status,
+              //                   style: TextStyle(color: impresora.color)),
+              //               leading: IconButton(
+              //                 icon: Icon(Icons.print, color: impresora.color),
+              //                 onPressed: () {
+              //                   zebraPrinter.print(data: "^XA\n^FO50,50^B3N,N,100,Y,N\n^FD>:123456^FS\n^XZ");
+              //                 },
+              //               ),
+              //               trailing: IconButton(
+              //                 icon: Icon(Icons.bluetooth_connected_rounded,
+              //                     color: impresora.color),
+              //                 onPressed: () {
+              //                   // Solo conectar a la impresora seleccionada
+              //                   zebraPrinter.connectToPrinter(impresora.address);
+              //                   widget.onPrinterSelected(impresora.address);
+              //                   Navigator.pop(context); // Cerrar modal
+              //                 },
+              //               ),
+              //             );
+              //           },
+              //       ),
+              //  ),
             ],
           ),
         );
       },
     );
+  }
+
+ Future<void> _buscarImpresoras() async {
+    
+    
   }
 }
