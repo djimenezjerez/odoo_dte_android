@@ -177,17 +177,24 @@ class PantallaPrincipal extends StatelessWidget {
               child: CircularProgressIndicator(),
             ),
           ),
-          
-      ],
-    ),
-      // llamada a boton flotante
-      floatingActionButton: BotonImpresoraMovil(
+        // llamada a boton flotante
+        BotonImpresoraMovil(
         onPrinterSelected: (impresora) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Conectando a $impresora...")),
-          );
-        },
+            );
+          },
+        ),
+      ],
       ),
+      
+      // floatingActionButton: BotonImpresoraMovil(
+      //   onPrinterSelected: (impresora) {
+      //     ScaffoldMessenger.of(context).showSnackBar(
+      //       SnackBar(content: Text("Conectando a $impresora...")),
+      //     );
+      //   },
+      // ),
     );
   }
 }
