@@ -39,10 +39,15 @@ class _BotonImpresoraMovilState extends State<BotonImpresoraMovil> {
             posY = (posY + details.delta.dy).clamp(0, screenHeight - 120);
           });
         },
-        child: FloatingActionButton(
-          onPressed: () => _mostrarModal(context),
-          child: const Icon(Icons.print),
-        ),
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: FloatingActionButton(
+            onPressed: () => _mostrarModal(context),
+            shape: CircleBorder(),
+            child: const Icon(Icons.print),
+          ),        
+        ),        
       ),
     );
   }
