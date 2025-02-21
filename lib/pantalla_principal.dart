@@ -27,7 +27,8 @@ class PantallaPrincipal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Scaffold(
+      body:  Stack(
       children: [
         Column(
           children: [
@@ -176,19 +177,17 @@ class PantallaPrincipal extends StatelessWidget {
               child: CircularProgressIndicator(),
             ),
           ),
-          // llamada a boton flotante
-          Stack(
-            children: [
-               BotonImpresoraMovil(
-                onPrinterSelected: (impresora) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Conectando a $impresora...")),
-                  );
-                },
-              ),
-            ]
-          ),
+          
       ],
+    ),
+      // llamada a boton flotante
+      floatingActionButton: BotonImpresoraMovil(
+        onPrinterSelected: (impresora) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Conectando a $impresora...")),
+          );
+        },
+      ),
     );
   }
 }

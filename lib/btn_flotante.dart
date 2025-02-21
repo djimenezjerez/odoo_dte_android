@@ -8,14 +8,10 @@ class BotonImpresoraMovil extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      bottom: 20,
-      right: 20,
-      child: FloatingActionButton(
+    return FloatingActionButton(
         onPressed: () => _mostrarModal(context),
         child: const Icon(Icons.print),
-      ),
-    );
+      );
   }
 
   void _mostrarModal(BuildContext context) {

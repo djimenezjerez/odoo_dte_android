@@ -63,14 +63,20 @@ class _PrinterModalState extends State<PrinterModal> {
                           return ListTile(
                             title: Text(printer.name),
                             subtitle: Text(printer.status, style: TextStyle(color: printer.color)),
-                            trailing: IconButton(
+                            trailing: Container(
+                              decoration: BoxDecoration(
+                                  color:  const Color.fromARGB(230, 231, 221, 234), // Color de fondo
+                                  shape: BoxShape.circle, // Forma redonda
+                                ),
+                              child:  IconButton(
                               icon: Icon(Icons.bluetooth_connected_rounded, color: printer.color),
                               onPressed: () {
                                 ZebraService().connectToPrinter(printer.address);
                                 widget.onPrinterSelected(printer.name);
                                 setState(() {});
                                 //Navigator.pop(context); // Cerrar modal
-                              },
+                                },
+                              ),
                             ),
                           );
                         },
