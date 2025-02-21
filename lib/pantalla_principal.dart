@@ -87,11 +87,8 @@ class PantallaPrincipal extends StatelessWidget {
                         if (fileExtension.contains('zpl')){
                           try{
                             File file = File(filePath);
-                            String zplCode = await file.readAsString();
-                            debugPrint("ingreso");
-                            await ZebraService().printData(zplCode);
-                            // ImpresionArchivosZpl impresion = ImpresionArchivosZpl(filePath: filePath, context: context);
-                            // impresion.imprimirArchivo();
+                            String zplCode = await file.readAsString();                          
+                            await ZebraService().printData(zplCode);                            
                           }catch(e){
                             showAlertDialog(context, "Error", "$e");
                           }

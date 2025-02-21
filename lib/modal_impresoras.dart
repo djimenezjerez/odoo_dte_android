@@ -35,11 +35,11 @@ class _PrinterModalState extends State<PrinterModal> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 400,
+      height: 300,
       child: Column(
         children: [
           const Padding(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(8),
             child: Text(
               "Seleccione una impresora",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
@@ -65,10 +65,11 @@ class _PrinterModalState extends State<PrinterModal> {
                             subtitle: Text(printer.status, style: TextStyle(color: printer.color)),
                             trailing: IconButton(
                               icon: Icon(Icons.bluetooth_connected_rounded, color: printer.color),
-                              onPressed: () async {
-                                await ZebraService().connectToPrinter(printer.address);
+                              onPressed: () {
+                                ZebraService().connectToPrinter(printer.address);
                                 widget.onPrinterSelected(printer.name);
-                                Navigator.pop(context); // Cerrar modal
+                                setState(() {});
+                                //Navigator.pop(context); // Cerrar modal
                               },
                             ),
                           );
