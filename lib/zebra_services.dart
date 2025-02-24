@@ -2,6 +2,7 @@ import 'package:zebrautil/zebra_device.dart';
 import 'package:zebrautil/zebra_printer.dart';
 import 'package:zebrautil/zebra_util.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:async';
 class ZebraService {
   static final ZebraService _instance = ZebraService._internal();
@@ -26,29 +27,47 @@ class ZebraService {
     controller = zebraPrinter.controller;  
   }
 
-  // Stream<List<ZebraDevice>> get onPrintersUpdated {
-  //   return _printersController.stream;
-  // }
-
-  // Future<void> startScanning() async {
-  //   zebraPrinter.startScanning();
-  //   // Aquí deberías agregar la lógica para escuchar las impresoras detectadas
-  //   zebraPrinter.controller.onDevicesChanged.listen((devices) {
-  //     printers = devices;
-  //     _printersController.add(printers); // Notificar que la lista ha cambiado
-  //   });
-
   Future<void> startScanning() async{
  // Aquí asumimos que zebraPrinter.controller tiene un método o un flujo para recibir los dispositivos.
-    zebraPrinter.startScanning();
-    getPrinters();
-    debugPrint("esta escaneando: ${zebraPrinter.isScanning}");
-     debugPrint("Dispositivos detectados: ${printers.length}");
-    // controller.onDevicesChanged.listen((devices) {
-    //   printers = devices;
-    //   _printersController.add(devices);  // Emitir lista actualizada
-    //   debugPrint("Dispositivos detectados: ${printers.length}");
-    // });
+    // zebraPrinter.startScanning();
+    List<BluetoothDevice> bondedDevices = await FlutterBluePlus.bondedDevices;
+    debugPrint("Resultados dispositivos vinculado: ${bondedDevices.map((r) => r.platformName).toList()}");
+     debugPrint("Dispositivos detectados: ${zebraPrinter.controller.printers.length}");
+    try {
+    // Obtener dispositivos Bluetooth conectados
+   
+    
+    if (bondedDevices.isEmpty) {
+      debugPrint("No hay dispositivos vinculados");
+    } else {
+      List<ZebraDevice> zebraDevices = [];
+
+      for (var device in bondedDevices) {
+        debugPrint("Dispositivo encontrado: ${device.platformName} - ${device.remoteId}");
+
+        // Convertir BluetoothDevice a ZebraDevice
+        ZebraDevice zebraDevice = ZebraDevice(
+          name: device.platformName,
+          address: device.remoteId.toString(),
+          isConnected: false, // Lo estableces a false porque aún no está conectado
+          status: "Desconectado",
+          isWifi: false
+        );
+
+        zebraDevices.add(zebraDevice);
+      }
+
+      // Asignar dispositivos encontrados al controlador de Zebra
+      for (var device in zebraDevices) {
+         zebraPrinter.controller.addPrinter(device);
+      }
+      
+
+      debugPrint("Se han asignado ${zebraPrinter.controller.printers.length} impresoras Zebra");
+    }
+  } catch (e) {
+    debugPrint("Error al obtener dispositivos vinculados: $e");
+  }
   }
 
   void stopScanning() {
@@ -57,11 +76,12 @@ class ZebraService {
 
   Future<void> connectToPrinter(String address) async {
     try {
+      debugPrint("zebra printer; ${zebraPrinter}");
       if (zebraPrinter != null) {
         await zebraPrinter.connectToPrinter(address);
         // connectedPrinter = controller.printers.firstWhere((p) => p.address == address);
         // isConnected = true;
-        debugPrint("Conectado a ${connectedPrinter!.name}");
+        //debugPrint("Conectado a ${connectedPrinter!.name}");
       }else{
         throw Exception("Error al conectar");
       }
@@ -78,7 +98,7 @@ class ZebraService {
   }
 
   Future<void> printData(String zplCode) async {
-    if (zebraPrinter != null && isConnected) {
+    if (zebraPrinter != null) {
       zebraPrinter.print(data: zplCode);
     } else {
       throw Exception("No se ha conectado a ninguna impresora");

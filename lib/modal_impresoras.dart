@@ -73,6 +73,7 @@ class _PrinterModalState extends State<PrinterModal> {
                               icon: Icon(Icons.bluetooth_connected_rounded, color: printer.color),
                               onPressed: () {
                                 ZebraService().connectToPrinter(printer.address);
+                                ZebraService().setPrinter(printer);
                                 widget.onPrinterSelected(printer.name);
                                 setState(() {});
                                 //Navigator.pop(context); // Cerrar modal
