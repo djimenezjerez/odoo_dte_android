@@ -20,7 +20,8 @@ class _PrinterModalState extends State<PrinterModal> {
   }
 
   Future<void> _initializePrinter() async {
-    await ZebraService().initPrinter(); // Usamos el servicio singleton
+    //await ZebraService().initPrinter(); // Usamos el servicio singleton
+    await ZebraService().startScanning();
     setState(() {
       isLoading = false;
     });

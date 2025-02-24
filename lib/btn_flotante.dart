@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 
 
 class BotonImpresoraMovil extends StatefulWidget {
+  final bool isPrinterConnected;
   final Function(String) onPrinterSelected;
 
-  const BotonImpresoraMovil({super.key, required this.onPrinterSelected});
+  const BotonImpresoraMovil({
+    super.key,
+    required this.isPrinterConnected,
+    required this.onPrinterSelected
+    });
   
   @override
   _BotonImpresoraMovilState createState() => _BotonImpresoraMovilState();
@@ -45,7 +50,7 @@ class _BotonImpresoraMovilState extends State<BotonImpresoraMovil> {
           child: FloatingActionButton(
             onPressed: () => _mostrarModal(context),
             shape: CircleBorder(),
-            child: const Icon(Icons.print),
+            child: Icon(Icons.print, color: widget.isPrinterConnected ? Colors.green :Colors.red),
           ),        
         ),        
       ),
