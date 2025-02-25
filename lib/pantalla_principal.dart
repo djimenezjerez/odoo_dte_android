@@ -1,4 +1,6 @@
-import 'package:boton_navegador/impresion_zebra.dart';
+import 'package:boton_navegador/zebra_services.dart';
+import 'package:boton_navegador/btn_flotante.dart';
+import 'package:boton_navegador/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -7,7 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io';
 
-class PantallaPrincipal extends StatelessWidget {
+class PantallaPrincipal extends StatefulWidget {
   final String url;                    // URL a cargar en el WebView
   final bool isDownloading;            // Indica si hay una descarga en progreso
   final ValueChanged<bool> onDownloadingChange;
@@ -23,16 +25,38 @@ class PantallaPrincipal extends StatelessWidget {
     required this.onWebViewCreated,
   });
 
+   @override
+  _PantallaPrincipalState createState() => _PantallaPrincipalState();
+}
+class _PantallaPrincipalState extends State<PantallaPrincipal> {
+  bool isPrinterConnected = false; // Estado de conexion de impresora
+
+  @override
+  void initState() {
+    super.initState();
+    _initPrinter();
+  }
+  Future<void> _initPrinter() async {
+    ZebraService().initPrinter();
+    // Escuchar cambios en la conexion de  impresora
+    ZebraService().onConnectionChanged.listen((isConnected) {
+      setState(() {
+        isPrinterConnected = isConnected;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Scaffold(
+      body:  Stack(
       children: [
         Column(
           children: [
             Expanded(
               child: InAppWebView(
                 initialUrlRequest: URLRequest(
-                  url: WebUri(url),
+                  url: WebUri(widget.url),
                   timeoutInterval: 20,
                 ),
                 initialSettings: InAppWebViewSettings(
@@ -43,12 +67,12 @@ class PantallaPrincipal extends StatelessWidget {
                   clearCache: true,
                 ),
                 onWebViewCreated: (controller) {
-                  onWebViewCreated(controller);
+                  widget.onWebViewCreated(controller);
                   controller.addJavaScriptHandler(
                     handlerName: "downloadBlob",
                     callback: (args) async {
                       try {
-                        onDownloadingChange(true); // Activar estado "descargando"
+                        widget.onDownloadingChange(true); // Activar estado "descargando"
                         var data = args[0];
                         // var mimeType = args[1];
                         // var contentDisposition = args[2];
@@ -83,8 +107,14 @@ class PantallaPrincipal extends StatelessWidget {
                         );
                         // --------si es zpl mandar a impresora zebra--------------------                    
                         if (fileExtension.contains('zpl')){
-                          ImpresionArchivosZpl impresion = ImpresionArchivosZpl(filePath: filePath, context: context);
-                          impresion.imprimirArchivo();
+                          try{
+                            File file = File(filePath);
+                            String zplCode = await file.readAsString();                          
+                            await ZebraService().printData(zplCode);                            
+                          }catch(e){
+                            showAlertDialog(context, "Error", "$e");
+                          }
+                           
                         }
                         //---------------------------------------------------------------
                       } catch (e) {
@@ -95,7 +125,7 @@ class PantallaPrincipal extends StatelessWidget {
                           fontSize: 16.0,
                         );
                       } finally {
-                        onDownloadingChange(false);
+                        widget.onDownloadingChange(false);
                       }
                     },
                   );
@@ -126,7 +156,7 @@ class PantallaPrincipal extends StatelessWidget {
                   return true;
                 },
                 onDownloadStartRequest: (controller, urlRequest) async {
-                  onDownloadingChange(true); // activar "descargando"
+                  widget.onDownloadingChange(true); // activar "descargando"
                   String fileUrl = urlRequest.url.uriValue.toString();
                   if (
                     fileUrl.toLowerCase().startsWith('blob:') ||
@@ -154,21 +184,40 @@ class PantallaPrincipal extends StatelessWidget {
                       textColor: Colors.white,
                       fontSize: 16.0,
                     );
-                     onDownloadingChange(false);
+                     widget.onDownloadingChange(false);
                   }
                 },
               ),
             ),
           ],
         ),
-        if (isDownloading)
+        if (widget.isDownloading)
           Container(
             color: Colors.black54,
             child: const Center(
               child: CircularProgressIndicator(),
             ),
           ),
+        // llamada a boton flotante
+        //ZebraService().initPrinter(),
+        BotonImpresoraMovil(
+        isPrinterConnected: isPrinterConnected, 
+        onPrinterSelected: (impresora) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Conectando a $impresora...")),
+            );
+          },
+        ),
       ],
+      ),
+      
+      // floatingActionButton: BotonImpresoraMovil(
+      //   onPrinterSelected: (impresora) {
+      //     ScaffoldMessenger.of(context).showSnackBar(
+      //       SnackBar(content: Text("Conectando a $impresora...")),
+      //     );
+      //   },
+      // ),
     );
   }
 }

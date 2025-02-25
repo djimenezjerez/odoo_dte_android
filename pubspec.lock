@@ -637,6 +637,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.5.0"
+  zebrautil:
+    dependency: "direct main"
+    description:
+      name: zebrautil
+      sha256: af5b9bd725d7713d0b1674b945855cd0df04854d83e05bd49cb6ff057ed018ca
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.42"
 sdks:
   dart: ">=3.6.1 <4.0.0"
   flutter: ">=3.27.0"
