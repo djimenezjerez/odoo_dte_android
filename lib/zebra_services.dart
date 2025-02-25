@@ -13,11 +13,10 @@ class ZebraService {
   late bool isConnected = false;
   List<ZebraDevice> printers = [];
   ZebraDevice? connectedPrinter;
+
   final StreamController<bool> _connectionStream = StreamController<bool>.broadcast();
   Stream<bool> get onConnectionChanged => _connectionStream.stream;
 
-  final StreamController<List<ZebraDevice>> _printersController = StreamController<List<ZebraDevice>>.broadcast();
-  Stream<List<ZebraDevice>> get onPrintersUpdated => _printersController.stream;
 
   ZebraService._internal();
   
@@ -28,46 +27,33 @@ class ZebraService {
   }
 
   Future<void> startScanning() async{
- // Aquí asumimos que zebraPrinter.controller tiene un método o un flujo para recibir los dispositivos.
     // zebraPrinter.startScanning();
     List<BluetoothDevice> bondedDevices = await FlutterBluePlus.bondedDevices;
-    debugPrint("Resultados dispositivos vinculado: ${bondedDevices.map((r) => r.platformName).toList()}");
-     debugPrint("Dispositivos detectados: ${zebraPrinter.controller.printers.length}");
     try {
-    // Obtener dispositivos Bluetooth conectados
-   
-    
-    if (bondedDevices.isEmpty) {
-      debugPrint("No hay dispositivos vinculados");
-    } else {
-      List<ZebraDevice> zebraDevices = [];
+      if (bondedDevices.isEmpty) {
+         throw Exception("No hay dispositivos vinculados");
+      } else {
+        List<ZebraDevice> printersDevice = [];
+        for (var device in bondedDevices) {
+          // Convertir BluetoothDevice a ZebraDevice
+          ZebraDevice zebraDevice = ZebraDevice(
+            name: device.platformName,
+            address: device.remoteId.toString(),
+            isConnected: false, 
+            status: "Desconectado",
+            isWifi: false
+          );
 
-      for (var device in bondedDevices) {
-        debugPrint("Dispositivo encontrado: ${device.platformName} - ${device.remoteId}");
-
-        // Convertir BluetoothDevice a ZebraDevice
-        ZebraDevice zebraDevice = ZebraDevice(
-          name: device.platformName,
-          address: device.remoteId.toString(),
-          isConnected: false, // Lo estableces a false porque aún no está conectado
-          status: "Desconectado",
-          isWifi: false
-        );
-
-        zebraDevices.add(zebraDevice);
+          printersDevice.add(zebraDevice);
+        }
+        // Asignacion de dispositivos encontrados al controlador de ZebraUtil
+        for (var device in printersDevice) {
+          zebraPrinter.controller.addPrinter(device);
+        }
       }
-
-      // Asignar dispositivos encontrados al controlador de Zebra
-      for (var device in zebraDevices) {
-         zebraPrinter.controller.addPrinter(device);
-      }
-      
-
-      debugPrint("Se han asignado ${zebraPrinter.controller.printers.length} impresoras Zebra");
-    }
-  } catch (e) {
-    debugPrint("Error al obtener dispositivos vinculados: $e");
-  }
+    } catch (e) {
+      throw Exception("Error al obtener dispositivos vinculados: $e");
+   }
   }
 
   void stopScanning() {
@@ -76,17 +62,21 @@ class ZebraService {
 
   Future<void> connectToPrinter(String address) async {
     try {
-      debugPrint("zebra printer; ${zebraPrinter}");
       if (zebraPrinter != null) {
         await zebraPrinter.connectToPrinter(address);
-        // connectedPrinter = controller.printers.firstWhere((p) => p.address == address);
-        // isConnected = true;
-        //debugPrint("Conectado a ${connectedPrinter!.name}");
+        await Future.delayed(Duration(milliseconds: 1000));
+        connectedPrinter = controller.printers.firstWhere((p) => p.address == address);
+        if (connectedPrinter!.status == "Conectado"){
+          isConnected = true;
+        }else{
+          isConnected = false;
+        }
+        _connectionStream.add(isConnected);
+        debugPrint("Conectado a ${connectedPrinter!.name}- estado: ${connectedPrinter!.status} - ${connectedPrinter!.isConnected}");
       }else{
         throw Exception("Error al conectar");
       }
     } catch (e) {
-      debugPrint("Error al conectar: $e");
       throw Exception(e);
     }
   }
@@ -98,27 +88,21 @@ class ZebraService {
   }
 
   Future<void> printData(String zplCode) async {
-    if (zebraPrinter != null) {
-      zebraPrinter.print(data: zplCode);
+    if (zebraPrinter != null && controller.printers.isNotEmpty) {
+      bool conectado = controller.printers.any((p) => p.status == 'Conectado');
+      if (conectado){
+        zebraPrinter.print(data: zplCode);
+      }else{
+        throw Exception("No existe ninguna impresora conectado, Conecte alguno y vuelva a intentar la impresión");
+      }
     } else {
       throw Exception("No se ha conectado a ninguna impresora");
     }
   }
 
-  void setPrinter(ZebraDevice printer){
-    connectedPrinter = printer;
-    _connectionStream.add(printer.isConnected);
-     debugPrint("Conectado a prueba ${printer.name}-${printer.status}");
-  }
-
-  ZebraDevice getPrinter(){
-     debugPrint("Conectado a prueba get ${connectedPrinter!.name}-${connectedPrinter!.status}");
-    return connectedPrinter!;
-  }
   void disconnectPrinter() {
     isConnected = false;
     connectedPrinter = null;
     _connectionStream.add(isConnected);
-    debugPrint("Impresora desconectada");
   }
 }
