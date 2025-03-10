@@ -53,22 +53,7 @@ class _BotonImpresoraMovilState extends State<BotonImpresoraMovil> {
           child: FloatingActionButton(
             onPressed: () => _mostrarModal(context),
             shape: CircleBorder(),
-            child: Stack(
-                alignment: Alignment.center,
-                children: [
-                    SizedBox(
-                      width: 30,
-                      height: 30,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2, // grosor
-                        value: 1.0,
-                        color: Colors.blueAccent,
-                      ),
-                    ),
-                    Icon(Icons.print, color: widget.isPrinterConnected ? Colors.green :Colors.red),
-                  ],
-              ),
-            //child: Icon(Icons.print, color: widget.isPrinterConnected ? Colors.green :Colors.red),
+            child: Icon(Icons.print, color: widget.isPrinterConnected ? Colors.green :Colors.red),
           ),        
         ),        
       ),
