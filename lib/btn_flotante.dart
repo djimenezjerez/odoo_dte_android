@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 class BotonImpresoraMovil extends StatefulWidget {
   final bool isPrinterConnected;
   final Function(String) onPrinterSelected;
+   final VoidCallback? onLongPress;
 
   const BotonImpresoraMovil({
     super.key,
     required this.isPrinterConnected,
-    required this.onPrinterSelected
+    required this.onPrinterSelected,
+    this.onLongPress,
     });
   
   @override
@@ -44,13 +46,29 @@ class _BotonImpresoraMovilState extends State<BotonImpresoraMovil> {
             posY = (posY + details.delta.dy).clamp(0, screenHeight - 120);
           });
         },
+        onLongPress: widget.onLongPress, // widget para recargar pagina
         child: SizedBox(
           width: 40,
           height: 40,
           child: FloatingActionButton(
             onPressed: () => _mostrarModal(context),
             shape: CircleBorder(),
-            child: Icon(Icons.print, color: widget.isPrinterConnected ? Colors.green :Colors.red),
+            child: Stack(
+                alignment: Alignment.center,
+                children: [
+                    SizedBox(
+                      width: 30,
+                      height: 30,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2, // grosor
+                        value: 1.0,
+                        color: Colors.blueAccent,
+                      ),
+                    ),
+                    Icon(Icons.print, color: widget.isPrinterConnected ? Colors.green :Colors.red),
+                  ],
+              ),
+            //child: Icon(Icons.print, color: widget.isPrinterConnected ? Colors.green :Colors.red),
           ),        
         ),        
       ),
