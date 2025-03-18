@@ -64,7 +64,7 @@ class ZebraService {
     try {
       if (zebraPrinter != null) {
         await zebraPrinter.connectToPrinter(address);
-        await Future.delayed(Duration(milliseconds: 1000));
+        await Future.delayed(Duration(milliseconds: 5000));
         connectedPrinter = controller.printers.firstWhere((p) => p.address == address);
         if (connectedPrinter!.status == "Conectado"){
           isConnected = true;
@@ -72,7 +72,6 @@ class ZebraService {
           isConnected = false;
         }
         _connectionStream.add(isConnected);
-        debugPrint("Conectado a ${connectedPrinter!.name}- estado: ${connectedPrinter!.status} - ${connectedPrinter!.isConnected}");
       }else{
         throw Exception("Error al conectar");
       }
