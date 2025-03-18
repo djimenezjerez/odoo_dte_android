@@ -16,7 +16,7 @@
     <uses-permission android:minSdkVersion="32" android:name="android.permission.NEARBY_WIFI_DEVICES" />
     
     <application
-        android:label="boton_navegador"
+        android:label="Odoo - DTE SRL"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:hardwareAccelerated="true"

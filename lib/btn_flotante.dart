@@ -1,4 +1,4 @@
-import 'package:boton_navegador/modal_impresoras.dart';
+import 'package:odoo_dte_srl/modal_impresoras.dart';
 import 'package:flutter/material.dart';
 
 

@@ -1,4 +1,4 @@
-package com.local.test.boton_navegador
+package com.local.test.odoo_dte_srl
 
 import io.flutter.embedding.android.FlutterActivity
 

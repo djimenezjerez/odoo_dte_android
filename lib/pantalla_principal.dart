@@ -1,6 +1,6 @@
-import 'package:boton_navegador/zebra_services.dart';
-import 'package:boton_navegador/btn_flotante.dart';
-import 'package:boton_navegador/helper.dart';
+import 'package:odoo_dte_srl/zebra_services.dart';
+import 'package:odoo_dte_srl/btn_flotante.dart';
+import 'package:odoo_dte_srl/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:fluttertoast/fluttertoast.dart';

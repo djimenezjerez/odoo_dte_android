@@ -1,6 +1,6 @@
-import 'package:boton_navegador/zebra_services.dart';
+import 'package:odoo_dte_srl/zebra_services.dart';
 import 'package:flutter/material.dart';
-import 'package:boton_navegador/helper.dart';
+import 'package:odoo_dte_srl/helper.dart';
 
 class PrinterModal extends StatefulWidget {
   final Function(String) onPrinterSelected;
