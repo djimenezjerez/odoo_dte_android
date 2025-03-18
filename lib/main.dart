@@ -13,6 +13,9 @@ import 'pantalla_principal.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Permission.storage.request();
+  await Permission.location.request();
+  await Permission.bluetooth.request();
+  await Permission.nearbyWifiDevices.request();
   runApp(const MyApp());
 }
 
@@ -53,7 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<bool> checkUrlConnectionHttpClient(String url) async {
     try {
-      debugPrint("URL: $url");
       final uri = Uri.parse(url);
       final request = await HttpClient().headUrl(uri);
       final response = await request.close();
@@ -101,14 +103,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!await verificarConfiguracion()) {
       abrirConfiguracion();
     } else {
-      debugPrint("verificando conexion: $isLoading");
       isConnected = await checkUrlConnectionHttpClient(url);
-      // isConnected = await checkUrlConnectionHttp(url)
-      debugPrint("existe conexion: $isConnected");
       setState(() {
         isLoading = false;
       });
-      debugPrint("finalizo verificando conexion: $isLoading");
     }
   }
 

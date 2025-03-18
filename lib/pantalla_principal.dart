@@ -1,6 +1,6 @@
-import 'package:boton_navegador/zebra_services.dart';
-import 'package:boton_navegador/btn_flotante.dart';
-import 'package:boton_navegador/helper.dart';
+import 'package:odoo_dte_srl/zebra_services.dart';
+import 'package:odoo_dte_srl/btn_flotante.dart';
+import 'package:odoo_dte_srl/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -30,6 +30,8 @@ class PantallaPrincipal extends StatefulWidget {
 }
 class _PantallaPrincipalState extends State<PantallaPrincipal> {
   bool isPrinterConnected = false; // Estado de conexion de impresora
+  InAppWebViewController? webViewController; // para guardar el controlador
+  bool isReloading = false; // controla la recarga de la pagina
 
   @override
   void initState() {
@@ -68,6 +70,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                 ),
                 onWebViewCreated: (controller) {
                   widget.onWebViewCreated(controller);
+                  webViewController = controller; // guardando controlador
                   controller.addJavaScriptHandler(
                     handlerName: "downloadBlob",
                     callback: (args) async {
@@ -130,6 +133,18 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                     },
                   );
                 },
+                onLoadStop: (controller, url) {
+                    //onLoadStop: Se ejecuta cuando la pagina ha terminado de cargarse
+                    setState(() {
+                      isReloading = false; // Liberar la pantalla cuando la recarga haya terminado
+                    });
+                  },
+                onLoadError: (controller, url, code, message) {
+                    // Si ocurre un error al cargar
+                    setState(() {
+                      isReloading = false; // Liberar la pantalla en caso de error
+                    });
+                  },
                 onCreateWindow: (controller, createWindowRequest) async {
                   // Manejar ventanas nuevas si el sitio hace window.open(...)
                   await Navigator.push(
@@ -199,25 +214,36 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
             ),
           ),
         // llamada a boton flotante
-        //ZebraService().initPrinter(),
-        BotonImpresoraMovil(
-        isPrinterConnected: isPrinterConnected, 
-        onPrinterSelected: (impresora) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Conectando a $impresora...")),
-            );
-          },
-        ),
+        if (isReloading) // Mostrar el bloqueador cuando esté recargando
+          Container(
+              color: Colors.black54,
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+          ),
+        if(!isReloading)
+          BotonImpresoraMovil(
+          isPrinterConnected: isPrinterConnected, 
+          onPrinterSelected: (impresora) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Conectando a $impresora...")),
+              );
+            },
+            // recarga en clic sostenido
+          onLongPress: () {
+            if (webViewController != null) {
+              setState(() {
+                isReloading = true; // Bloquear la pantalla cuando se presiona largo
+              });
+              webViewController!.reload(); // Recargar WebView con clic sostenido
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Recargando página...")),
+              );
+            }
+            },
+          ),
       ],
       ),
-      
-      // floatingActionButton: BotonImpresoraMovil(
-      //   onPrinterSelected: (impresora) {
-      //     ScaffoldMessenger.of(context).showSnackBar(
-      //       SnackBar(content: Text("Conectando a $impresora...")),
-      //     );
-      //   },
-      // ),
     );
   }
 }

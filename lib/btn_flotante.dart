@@ -1,15 +1,17 @@
-import 'package:boton_navegador/modal_impresoras.dart';
+import 'package:odoo_dte_srl/modal_impresoras.dart';
 import 'package:flutter/material.dart';
 
 
 class BotonImpresoraMovil extends StatefulWidget {
   final bool isPrinterConnected;
   final Function(String) onPrinterSelected;
+   final VoidCallback? onLongPress;
 
   const BotonImpresoraMovil({
     super.key,
     required this.isPrinterConnected,
-    required this.onPrinterSelected
+    required this.onPrinterSelected,
+    this.onLongPress,
     });
   
   @override
@@ -44,6 +46,7 @@ class _BotonImpresoraMovilState extends State<BotonImpresoraMovil> {
             posY = (posY + details.delta.dy).clamp(0, screenHeight - 120);
           });
         },
+        onLongPress: widget.onLongPress, // widget para recargar pagina
         child: SizedBox(
           width: 40,
           height: 40,

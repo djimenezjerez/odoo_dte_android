@@ -1,5 +1,6 @@
-import 'package:boton_navegador/zebra_services.dart';
+import 'package:odoo_dte_srl/zebra_services.dart';
 import 'package:flutter/material.dart';
+import 'package:odoo_dte_srl/helper.dart';
 
 class PrinterModal extends StatefulWidget {
   final Function(String) onPrinterSelected;
@@ -21,10 +22,14 @@ class _PrinterModalState extends State<PrinterModal> {
 
   Future<void> _initializePrinter() async {
     //await ZebraService().initPrinter(); // Usamos el servicio singleton
-    await ZebraService().startScanning();
-    setState(() {
-      isLoading = false;
-    });
+     try{
+        await ZebraService().startScanning();
+        setState(() {
+          isLoading = false;
+        });
+     }catch(e){
+        showAlertDialog(context, "Error", "$e");
+     }
   }
 
   @override
