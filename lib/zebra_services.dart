@@ -28,8 +28,12 @@ class ZebraService {
 
   Future<void> startScanning() async{
     // zebraPrinter.startScanning();
-    List<BluetoothDevice> bondedDevices = await FlutterBluePlus.bondedDevices;
+    var bluetoothState = await FlutterBluePlus.adapterState.first;
+    if (bluetoothState != BluetoothAdapterState.on) {
+      throw Exception("Debe activar el Bluetooth.");
+    }
     try {
+       List<BluetoothDevice> bondedDevices = await FlutterBluePlus.bondedDevices;
       if (bondedDevices.isEmpty) {
          throw Exception("No hay dispositivos vinculados");
       } else {
@@ -64,7 +68,7 @@ class ZebraService {
     try {
       if (zebraPrinter != null) {
         await zebraPrinter.connectToPrinter(address);
-        await Future.delayed(Duration(milliseconds: 5000));
+        await Future.delayed(Duration(milliseconds: 2000));
         connectedPrinter = controller.printers.firstWhere((p) => p.address == address);
         if (connectedPrinter!.status == "Conectado"){
           isConnected = true;
