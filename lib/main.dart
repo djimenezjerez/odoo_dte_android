@@ -13,6 +13,9 @@ import 'pantalla_principal.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Permission.storage.request();
+  await Permission.location.request();
+  await Permission.bluetooth.request();
+  await Permission.nearbyWifiDevices.request();
   runApp(const MyApp());
 }
 
