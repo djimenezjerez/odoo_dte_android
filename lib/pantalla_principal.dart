@@ -134,17 +134,18 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                   );
                 },
                 onLoadStop: (controller, url) {
-                    //onLoadStop: Se ejecuta cuando la pagina ha terminado de cargarse
-                    setState(() {
-                      isReloading = false; // Liberar la pantalla cuando la recarga haya terminado
-                    });
-                  },
-                onLoadError: (controller, url, code, message) {
-                    // Si ocurre un error al cargar
-                    setState(() {
-                      isReloading = false; // Liberar la pantalla en caso de error
-                    });
-                  },
+                  //onLoadStop: Se ejecuta cuando la pagina ha terminado de cargarse
+                  setState(() {
+                    isReloading = false; // Liberar la pantalla cuando la recarga haya terminado
+                  });
+                },
+                onReceivedError: (controller, request, error) {
+                  // Si ocurre un error al cargar
+                  setState(() {
+                    isReloading = false; // Liberar la pantalla en caso de error
+                  });
+                  return;
+                },
                 onCreateWindow: (controller, createWindowRequest) async {
                   // Manejar ventanas nuevas si el sitio hace window.open(...)
                   await Navigator.push(

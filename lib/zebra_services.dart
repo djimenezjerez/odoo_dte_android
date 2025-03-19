@@ -1,9 +1,10 @@
 import 'package:zebrautil/zebra_device.dart';
 import 'package:zebrautil/zebra_printer.dart';
 import 'package:zebrautil/zebra_util.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:app_settings/app_settings.dart';
 import 'dart:async';
+
 class ZebraService {
   static final ZebraService _instance = ZebraService._internal();
   factory ZebraService() => _instance;
@@ -30,7 +31,9 @@ class ZebraService {
     // zebraPrinter.startScanning();
     var bluetoothState = await FlutterBluePlus.adapterState.first;
     if (bluetoothState != BluetoothAdapterState.on) {
-      throw Exception("Debe activar el Bluetooth.");
+      AppSettings.openAppSettings(type: AppSettingsType.bluetooth);
+      zebraPrinter.stopScanning();
+      //throw Exception("Debe activar el Bluetooth.");
     }
     try {
        List<BluetoothDevice> bondedDevices = await FlutterBluePlus.bondedDevices;
@@ -66,32 +69,26 @@ class ZebraService {
 
   Future<void> connectToPrinter(String address) async {
     try {
-      if (zebraPrinter != null) {
-        await zebraPrinter.connectToPrinter(address);
-        await Future.delayed(Duration(milliseconds: 2000));
-        connectedPrinter = controller.printers.firstWhere((p) => p.address == address);
-        if (connectedPrinter!.status == "Conectado"){
-          isConnected = true;
-        }else{
-          isConnected = false;
-        }
-        _connectionStream.add(isConnected);
+      await zebraPrinter.connectToPrinter(address);
+      await Future.delayed(Duration(milliseconds: 2000));
+      connectedPrinter = controller.printers.firstWhere((p) => p.address == address);
+      if (connectedPrinter!.status == "Conectado"){
+        isConnected = true;
       }else{
-        throw Exception("Error al conectar");
+        isConnected = false;
       }
+      _connectionStream.add(isConnected);
     } catch (e) {
       throw Exception(e);
     }
   }
   
   Future<void> getPrinters() async {
-    if (zebraPrinter != null) {
-      printers = controller.printers;
-    }
+    printers = controller.printers;
   }
 
   Future<void> printData(String zplCode) async {
-    if (zebraPrinter != null && controller.printers.isNotEmpty) {
+    if (controller.printers.isNotEmpty) {
       bool conectado = controller.printers.any((p) => p.status == 'Conectado');
       if (conectado){
         zebraPrinter.print(data: zplCode);

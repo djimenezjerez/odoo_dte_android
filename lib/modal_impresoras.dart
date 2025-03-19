@@ -1,3 +1,4 @@
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:odoo_dte_srl/zebra_services.dart';
 import 'package:flutter/material.dart';
 import 'package:odoo_dte_srl/helper.dart';
@@ -22,13 +23,16 @@ class _PrinterModalState extends State<PrinterModal> {
 
   Future<void> _initializePrinter() async {
     //await ZebraService().initPrinter(); // Usamos el servicio singleton
-     try{
-        await ZebraService().startScanning();
-        setState(() {
-          isLoading = false;
-        });
-     }catch(e){
-        showAlertDialog(context, "Error", "$e");
+     try {
+       await ZebraService().startScanning();
+       setState(() {
+         isLoading = false;
+       });
+     } catch(e) {
+       Navigator.pop(context);
+       if (BluetoothAdapterState.on == true) {
+         showAlertDialog(context, "Error", "Debe activar el Bluetooth");
+       }
      }
   }
 

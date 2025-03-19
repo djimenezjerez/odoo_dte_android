@@ -1,7 +1,7 @@
 name: odoo_dte_srl
 description: "Cliente android nativo para Odoo Enterprise/Community"
 publish_to: 'none'
-version: 1.0.1
+version: 1.0.2
 
 environment:
   sdk: ^3.6.1
@@ -19,6 +19,7 @@ dependencies:
   flutter_blue_plus: ^1.35.2
   zebrautil: ^1.4.42
   flutter_launcher_icons: ^0.14.3
+  app_settings: ^5.2.0
 
 dev_dependencies:
   flutter_test:
