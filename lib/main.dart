@@ -15,6 +15,9 @@ Future<void> main() async {
   await Permission.storage.request();
   await Permission.location.request();
   await Permission.bluetooth.request();
+  await Permission.bluetoothAdvertise.request();
+  await Permission.bluetoothConnect.request();
+  await Permission.bluetoothScan.request();
   await Permission.nearbyWifiDevices.request();
   runApp(const MyApp());
 }
