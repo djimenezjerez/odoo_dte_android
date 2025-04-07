@@ -8,4 +8,4 @@
 
 **1.- [Configuración de Conexión a servidor web Odoo.](/Docs/manuales/CONFIGURACION.md)**  
 
-**2.- [Establecer conexión con impresora.](/Docs/manuales/CONEXION_IMPRESORA.md)**  
+**2.- [Establecer conexión con impresora e impresión directa.](/Docs/manuales/CONEXION_IMPRESORA.md)**  
