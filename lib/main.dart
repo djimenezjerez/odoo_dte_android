@@ -29,8 +29,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      // Quita el debug banner si quieres
       debugShowCheckedModeBanner: false,
+      //useInheritedMediaQuery: true,
+      //builder: DevicePreview.appBuilder,
+      builder: (context, child) {
+        //final bottomPadding = MediaQuery.of(context).padding.bottom;
+       return SafeArea(
+          top: false,
+          bottom: true,
+          child: child!,
+        );
+      },
       home: HomeScreen(), // Aquí está nuestra pantalla principal
     );
   }
